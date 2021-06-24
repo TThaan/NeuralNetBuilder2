@@ -1,0 +1,150 @@
+﻿using MatrixHelper;
+using NeuralNetBuilder.CostFunctions;
+using NeuralNetBuilder.WeightInits;
+using System;
+using System.Linq;
+
+namespace NeuralNetBuilder.FactoriesAndParameters
+{
+    internal class NetFactory
+    {
+        #region fields
+
+        private static Random rnd = RandomProvider.GetThreadRandom();
+
+        #endregion
+
+        #region public/internal
+
+        internal static INet CreateRawNet()
+        {
+            return new Net() { NetStatus = NetStatus.Undefined };
+        }
+        internal static INet InitializeNet(INet rawNet, INetParameters netParameters)
+        {
+            ILayer[] layers = new ILayer[netParameters.LayerParametersCollection.Count];
+            
+            for (int i = 0; i < netParameters.LayerParametersCollection.Count; i++)
+            {
+                layers[i] = LayerFactory.GetLayer(netParameters.LayerParametersCollection.ElementAt(i));
+
+                if (i > 0)
+                {
+                    layers[i].Weights = GetWeights(netParameters.LayerParametersCollection.ElementAt(i), netParameters.LayerParametersCollection.ElementAt(i - 1));
+                    layers[i].Biases = GetBiases(netParameters.LayerParametersCollection.ElementAt(i));
+                    InitializeWeight(layers[i], netParameters.WeightInitType);
+                }
+            }
+            for (int i = 0; i < netParameters.LayerParametersCollection.Count - 1; i++)
+            {
+                layers[i+1].ReceptiveField = layers[i];
+                layers[i].ProjectiveField = layers[i + 1];
+            }
+
+            rawNet.Layers = layers;
+            rawNet.NetStatus = NetStatus.Initialized;    // DIC?
+
+            return rawNet;
+        }
+        internal static ILearningNet GetLearningNet(INet net, CostType costType)
+        {
+            ILearningLayer[] layers = new ILearningLayer[net.Layers.Length];
+            layers = net.Layers.Select(x => LayerFactory.GetLearningLayer(x))
+                .ToArray();
+
+            for (int i = 0; i < layers.Length - 1; i++)
+            {
+                layers[i + 1].ReceptiveField = layers[i];
+                layers[i].ProjectiveField = layers[i + 1];
+            }
+
+            ILearningNet result = new LearningNet()
+            {
+                Layers = layers,
+                CostFunction = GetCostFunction(costType)
+            };
+
+            return result;
+        }
+        internal static INet GetNet(ILearningNet originalNet)
+        {
+            ILayer[] layers = new ILayer[originalNet.Layers.Length];
+            originalNet.Layers.CopyTo(layers, 0);
+            return new Net()
+            {
+                Layers = layers
+            };
+        }
+        internal static INet GetCopy(INet originalNet)
+        {
+            ILayer[] layers = new ILayer[originalNet.Layers.Length];
+            originalNet.Layers.CopyTo(layers, 0);
+            return new Net()
+            {
+                Layers = layers
+            };
+        }
+
+        #endregion
+
+        #region helpers
+
+        private static IMatrix GetWeights(ILayerParameters layerParameters, ILayerParameters receptiveLayerParameters)
+        {
+            int m = layerParameters.NeuronsPerLayer;
+            int n = receptiveLayerParameters.NeuronsPerLayer;
+            float weightMin = layerParameters.WeightMin;
+            float weightMax = layerParameters.WeightMax;
+
+            return new Matrix(m, n, $"Layer {layerParameters.Id}.Weights").ForEach(x => GetRandomFloat(weightMin, weightMax));
+        }
+        private static IMatrix GetBiases(ILayerParameters layerParameters)
+        {
+            if ((layerParameters.BiasMax - layerParameters.BiasMin) == 0)
+                return null;
+
+            int m = layerParameters.NeuronsPerLayer;
+            float biasMin = layerParameters.BiasMin;
+            float biasMax = layerParameters.BiasMax;
+
+            return new Matrix(m, $"Layer {layerParameters.Id}.Biases").ForEach(x => GetRandomFloat(biasMin, biasMax));
+        }
+        private static float GetRandomFloat(float min, float max)
+        {
+            return (float)(min + (max - min) * rnd.NextDouble());
+        }
+        private static void InitializeWeight(ILayer layer, WeightInitType weightInitType)
+        {
+            IWeightInit weightInit;
+
+            switch (weightInitType)
+            {
+                case WeightInitType.Xavier:
+                    weightInit = new Xavier();
+                    break;
+                default:
+                    weightInit = default;
+                    // throw new ArgumentException("No default CostFunction defined!");
+                    break;
+            }
+
+            if (weightInit != null)
+            {
+                weightInit.InitializeWeights(layer);
+            }
+        }
+        private static ICostFunction GetCostFunction(CostType costType)
+        {
+            switch (costType)
+            {
+                case CostType.SquaredMeanError:
+                    return new SquaredMeanError();
+                default:
+                    return default;
+                    // throw new ArgumentException("No default CostFunction defined!");
+            }
+        }
+
+        #endregion
+    }
+}

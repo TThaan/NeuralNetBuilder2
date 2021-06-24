@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="CustomLogger">
+      <HintPath>..\..\..\CustomLogger\CustomLoggerSolution\CustomLogger\bin\Debug\netcoreapp3.1\CustomLogger.dll</HintPath>
+    </Reference>
+    <Reference Include="DeepLearningDataProvider">
+      <HintPath>..\..\..\DeepLearningDataProvider\DeepLearningDataProviderSolution\DeepLearningDataProvider\bin\Debug\netcoreapp3.1\DeepLearningDataProvider.dll</HintPath>
+    </Reference>
+    <Reference Include="MatrixHelper">
+      <HintPath>..\..\..\MatrixHelper\MatrixHelperSolution\MatrixHelper\bin\Debug\netcoreapp3.1\MatrixHelper.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
