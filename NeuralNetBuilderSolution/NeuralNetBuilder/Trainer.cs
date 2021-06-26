@@ -198,7 +198,7 @@ namespace NeuralNetBuilder
                 {
                     trainerStatus = value;
                     OnPropertyChanged();
-                    OnTrainerStatusChanged();
+                    OnTrainerStatusChanged($"TrainerStatus = {value}");
                 }
             }
         }
@@ -296,6 +296,9 @@ namespace NeuralNetBuilder
         {
             TrainedNet = LearningNet.GetNet();
 
+            if(TrainerStatus != TrainerStatus.Paused)
+                OnTrainerStatusChanged($"Epoch {currentEpoch} finished. (Accuracy: {lastEpochsAccuracy})");
+
             if (currentSample == 1000)
             {
                 LearningRate *= LearningRateChange;
@@ -363,9 +366,9 @@ namespace NeuralNetBuilder
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-        void OnTrainerStatusChanged()
+        void OnTrainerStatusChanged(string info)
         {
-            TrainerStatusChanged?.Invoke(this, new TrainerStatusChangedEventArgs(""));
+            TrainerStatusChanged?.Invoke(this, new TrainerStatusChangedEventArgs(info));
         }
 
         #endregion
