@@ -1,5 +1,6 @@
-﻿using MatrixHelper;
+﻿using MatrixExtensions;
 using NeuralNetBuilder.ActivatorFunctions;
+using System.Linq;
 
 namespace NeuralNetBuilder.FactoriesAndParameters
 {
@@ -18,8 +19,8 @@ namespace NeuralNetBuilder.FactoriesAndParameters
                 Id = layerParameters.Id,
                 N = layerParameters.NeuronsPerLayer,
                 ActivationFunction = GetActivationFunction(layerParameters.ActivationType),
-                Input = new Matrix(layerParameters.NeuronsPerLayer, $"Layer {layerParameters.Id}.{nameof(result.Input)}"),
-                Output = new Matrix(layerParameters.NeuronsPerLayer, $"Layer {layerParameters.Id}.{nameof(result.Output)}")
+                Input = new float[layerParameters.NeuronsPerLayer],
+                Output = new float[layerParameters.NeuronsPerLayer]
             };
 
             return result;
@@ -31,15 +32,15 @@ namespace NeuralNetBuilder.FactoriesAndParameters
                 Id = layer.Id ,
                 N = layer.N,
                 ActivationFunction= layer.ActivationFunction,
-                Input = layer.Input.GetCopy($"Layer {layer.Id}.{nameof(result.Input)}"),
-                Output = layer.Output.GetCopy($"Layer {layer.Id}.{nameof(result.Output)}"),
-                Weights = layer.Weights.GetCopy($"LearningLayer {layer.Id}.{nameof(result.Weights)}"),
-                Biases = layer.Biases.GetCopy($"LearningLayer {layer.Id}.{nameof(result.Biases)}"),
-                DCDA = new Matrix(layer.N, $"LearningLayer {layer.Id}.{nameof(result.DCDA)}"),
-                DADZ = new Matrix(layer.N, $"LearningLayer {layer.Id}.{nameof(result.DADZ)}"),
-                Delta = new Matrix(layer.N, $"LearningLayer {layer.Id}.{nameof(result.Delta)}"),
-                WeightsChange = layer.Weights == null ? null : new Matrix(layer.Weights.m, layer.Weights.n, $"LearningLayer {layer.Id}.{nameof(result.WeightsChange)}"),
-                BiasesChange = layer.Biases == null ? null : new Matrix(layer.N, $"LearningLayer {layer.Id}.{nameof(result.BiasesChange)}")
+                Input = layer.Input.GetCopy(),
+                Output = layer.Output.GetCopy(),
+                Weights = layer.Weights.GetCopy(),
+                Biases = layer.Biases.GetCopy(),
+                DCDA = new float[layer.N],
+                DADZ = new float[layer.N],
+                Delta = new float[layer.N],
+                WeightsChange = layer.Weights == null ? null : new float[layer.Weights.GetLength(0), layer.Weights.GetLength(1)],
+                BiasesChange = layer.Biases == null ? null : new float[layer.N]
             };
 
             return result;

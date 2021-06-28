@@ -1,4 +1,4 @@
-﻿using MatrixHelper;
+﻿using MatrixExtensions;
 using System;
 using System.Linq;
 
@@ -16,15 +16,18 @@ namespace NeuralNetBuilder.ActivatorFunctions
             return weightedInput * (1 - weightedInput);
         }
 
-        public override void Activation(IMatrix weightedInput, IMatrix result)
+        public override float[] Activation(float[] weightedInput)
         {
-            result.ForEach(weightedInput, x => Activation(x));
+            var result = weightedInput.ForEach(x => Activation(x));
+            
             float sum = result.Sum();
-            if (sum != 0) result.ForEach(x => x / sum);
+            if (sum != 0) result = result.ForEach(x => x / sum);
+
+            return result;
         }
-        public override void Derivation(IMatrix weightedInput, IMatrix result)
+        public override float[] Derivation(float[] weightedInput)
         {
-            result.ForEach(weightedInput, x => Derivation(x));
+            return weightedInput.ForEach(x => Derivation(x));
         }
     }
 }

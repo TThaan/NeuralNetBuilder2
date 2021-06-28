@@ -15,8 +15,8 @@
     <Reference Include="DeepLearningDataProvider">
       <HintPath>..\..\..\DeepLearningDataProvider\DeepLearningDataProviderSolution\DeepLearningDataProvider\bin\Debug\netcoreapp3.1\DeepLearningDataProvider.dll</HintPath>
     </Reference>
-    <Reference Include="MatrixHelper">
-      <HintPath>..\..\..\MatrixHelper\MatrixHelperSolution\MatrixHelper\bin\Debug\netcoreapp3.1\MatrixHelper.dll</HintPath>
+    <Reference Include="MatrixExtensions">
+      <HintPath>..\..\..\MatrixExtensions\MatrixExtensions_Solution\MatrixExtensions\bin\Debug\netcoreapp3.1\MatrixExtensions.dll</HintPath>
     </Reference>
   </ItemGroup>
 

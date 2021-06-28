@@ -1,22 +1,22 @@
-﻿using MatrixHelper;
+﻿using MatrixExtensions;
 using System;
 
 namespace NeuralNetBuilder.ActivatorFunctions
 {
     [Serializable]
-    public abstract class ActivationFunction
+    public abstract class ActivationFunction    // Better as ext meths?
     {
         public ActivationType ActivationType { get; internal set; } // redundant?
 
         public abstract float Activation(float weightedInput);
         public abstract float Derivation(float weightedInput);
-        public virtual void Activation(IMatrix weightedInput, IMatrix result)
+        public virtual float[] Activation(float[] weightedInput)
         {
-            result.ForEach(weightedInput, x => Activation(x));
+            return weightedInput.ForEach(x => Activation(x));
         }
-        public virtual void Derivation(IMatrix weightedInput, IMatrix result)
+        public virtual float[] Derivation(float[] weightedInput)
         {
-            result.ForEach(weightedInput, x => Derivation(x));
+            return weightedInput.ForEach(x => Derivation(x));
         }
     }
 }

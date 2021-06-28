@@ -1,4 +1,4 @@
-﻿using MatrixHelper;
+﻿using MatrixExtensions;
 using System;
 
 namespace NeuralNetBuilder.WeightInits
@@ -10,11 +10,11 @@ namespace NeuralNetBuilder.WeightInits
             if (layer.ActivationFunction.ActivationType == ActivationType.ReLU ||
                 layer.ActivationFunction.ActivationType == ActivationType.LeakyReLU)
             {
-                layer.Weights.ForEach(x => ForRelu(x, layer.N));
+                layer.Weights = layer.Weights.ForEach(x => ForRelu(x, layer.N));
             }
             else
             {
-                layer.Weights.ForEach(x => Standard(x, layer.N));
+                layer.Weights = layer.Weights.ForEach(x => Standard(x, layer.N));
             }
         }
 

@@ -4,6 +4,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using MatrixExtensions;
 
 namespace NeuralNetBuilder
 {
@@ -329,8 +330,8 @@ namespace NeuralNetBuilder
             logger?.Log($"\n              + New Weights and Biases: +\n\n");
             foreach (var layer in learningNet.Layers)
             {
-                logger?.Log(layer.Weights);
-                if (layer.Biases != null) logger?.Log(layer.Biases);
+                logger?.Log(layer.Weights.ToLog(nameof(layer.Weights)));
+                if (layer.Biases != null) logger?.Log(layer.Biases.ToLog(nameof(layer.Biases)));
             }
         }
         private void LogTesting(int sampleNr, bool isOutputCorrect, int correct, int wrong, ILogger logger)
@@ -342,9 +343,9 @@ namespace NeuralNetBuilder
                 logger?.Log("\n                        * * * T E S T I N G * * *\n\n");
             }
 
-            logger?.Log(sampleSet.TestingSamples[sampleNr].Input);
-            logger?.Log(sampleSet.TestingSamples[sampleNr].ExpectedOutput);
-            logger?.Log(learningNet.Output);
+            logger?.Log(sampleSet.TestingSamples[sampleNr].Input.ToLog("Input"));
+            logger?.Log(sampleSet.TestingSamples[sampleNr].ExpectedOutput.ToLog("ExpectedOutput"));
+            logger?.Log(learningNet.Output.ToLog(nameof(learningNet.Output)));
             logger?.Log($"\nTestResult: {(isOutputCorrect ? "Correct" : "Wrong")}\n\n");
 
             if (sampleNr == sampleSet.TestingSamples.Length - 1)

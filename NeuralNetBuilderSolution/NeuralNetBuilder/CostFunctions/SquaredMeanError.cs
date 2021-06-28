@@ -1,24 +1,24 @@
-﻿using MatrixHelper;
+﻿using MatrixExtensions;
 
 namespace NeuralNetBuilder.CostFunctions
 {
     public class SquaredMeanError : ICostFunction
     {
-        public void Cost(IMatrix output, IMatrix target, IMatrix result) 
+        public float[] Cost(float[] output, float[] target) 
         {
             // result = (target - output) * (target - output); //.5f * 
-            PerformantOperations.Subtract(target, output, result);
-            PerformantOperations.SetHadamardProduct(result, result, result);
+            var tmp = target.Subtract(output);
+            return tmp.Multiply_Elementwise(tmp);
         }
-        public void Derivation(IMatrix output, IMatrix target, IMatrix result)
+        public float[] Derivation(float[] output, float[] target)
         {
-            PerformantOperations.Subtract(output, target, result);
+            return output.Subtract(target);
         }
-        public float GetTotalCost(IMatrix output, IMatrix target)
+        public float GetTotalCost(float[] output, float[] target)
         {
             float result = 0;
 
-            for (int j = 0; j < output.m; j++)
+            for (int j = 0; j < output.Length; j++)
             {
                 result += (target[j] - output[j]) * (target[j] - output[j]);    // .5f * // PerfOps
             }

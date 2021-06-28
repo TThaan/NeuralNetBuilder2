@@ -1,11 +1,9 @@
-﻿using MatrixHelper;
-
-namespace NeuralNetBuilder.CostFunctions
+﻿namespace NeuralNetBuilder.CostFunctions
 {
     public interface ICostFunction
     {
-        void Cost(IMatrix output, IMatrix target, IMatrix result);
-        void Derivation(IMatrix output, IMatrix target, IMatrix result);
-        float GetTotalCost(IMatrix output, IMatrix target);
+        float[] Cost(float[] output, float[] target);
+        float[] Derivation(float[] output, float[] target);
+        float GetTotalCost(float[] output, float[] target);
     }
 }

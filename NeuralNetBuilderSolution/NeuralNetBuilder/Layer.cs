@@ -1,5 +1,5 @@
 ﻿using CustomLogger;
-using MatrixHelper;
+using MatrixExtensions;
 using NeuralNetBuilder.ActivatorFunctions;
 using System;
 
@@ -9,14 +9,14 @@ namespace NeuralNetBuilder
     {
         int Id { get; set; }
         int N { get; set; }
-        IMatrix Input { get; set; }
-        IMatrix Output { get; set; }
-        IMatrix Weights { get; set; }
-        IMatrix Biases { get; set; }
+        float[] Input { get; set; }
+        float[] Output { get; set; }
+        float[,] Weights { get; set; }
+        float[] Biases { get; set; }
         ActivationFunction ActivationFunction { get; set; }
         ILayer ReceptiveField { get; set; }
         ILayer ProjectiveField { get; set; }
-        void ProcessInput(IMatrix originalInput = null);
+        void ProcessInput(float[] originalInput = null);
     }
 
     [Serializable]
@@ -25,7 +25,8 @@ namespace NeuralNetBuilder
         #region fields & ctor
 
         int id, n;
-        IMatrix input, output, weights, biases;
+        float[] input, output, biases;
+        float[,] weights;
         ILayer receptiveField, projectiveField;
         ActivationFunction activationFunction;
 
@@ -59,7 +60,7 @@ namespace NeuralNetBuilder
                 }
             }
         }
-        public IMatrix Input
+        public float[] Input
         {
             get { return input; }
             set
@@ -71,7 +72,7 @@ namespace NeuralNetBuilder
                 }
             }
         }        
-        public IMatrix Output
+        public float[] Output
         {
             get { return output; }
             set
@@ -95,7 +96,7 @@ namespace NeuralNetBuilder
                 }
             }
         }
-        public IMatrix Weights
+        public float[,] Weights
         {
             get { return weights; }
             set
@@ -107,7 +108,7 @@ namespace NeuralNetBuilder
                 }
             }
         }
-        public IMatrix Biases
+        public float[] Biases
         {
             get { return biases; }
             set
@@ -144,7 +145,7 @@ namespace NeuralNetBuilder
             }
         }
 
-        public void ProcessInput(IMatrix originalInput = null)
+        public void ProcessInput(float[] originalInput = null)
         {
             SetInput(originalInput);
             SetOutput();
@@ -155,25 +156,29 @@ namespace NeuralNetBuilder
 
         #region helpers
 
-        void SetInput(IMatrix originalInput)
+        void SetInput(float[] originalInput)
         {
             if (originalInput != null)
             {
-                Input.ForEach(originalInput, x => x);
+                Input = originalInput.ForEach(x => x);
             }
             else
             {
                 // Input.ForEach(x => 0); // check!
-                PerformantOperations.SetScalarProduct(Weights, ReceptiveField.Output, Input);
+
+                Input = Weights.Multiply_MatrixWithColumnVector(ReceptiveField.Output);
+                //PerformantOperations.SetScalarProduct(Weights, ReceptiveField.Output, Input);
             }
 
             if (Biases != null)
-                PerformantOperations.Add(Input, Biases, Input); // check!
+                Input = Input.Add(Biases);
+                //PerformantOperations.Add(Input, Biases, Input); // check!
         }
         void SetOutput()
         {
             Output?.ForEach(x => 0); // check!
-            ActivationFunction.Activation(Input, Output);
+
+            Output = ActivationFunction.Activation(Input);
         }
 
         #endregion
@@ -195,10 +200,10 @@ namespace NeuralNetBuilder
                 ? $", {nameof(ProjectiveField)}: None"
                 : $", {nameof(ProjectiveField)}: {ProjectiveField.Id}";
             result += ")\n";
-            result += $"{Input?.ToLog()}";
-            result += $"{Output?.ToLog()}";
-            result += $"{Weights?.ToLog()}";
-            result += $"{Biases?.ToLog()}";
+            result += $"{Input?.ToLog(nameof(Input))}";
+            result += $"{Output?.ToLog(nameof(Output))}";
+            result += $"{Weights?.ToLog(nameof(Weights))}";
+            result += $"{Biases?.ToLog(nameof(Biases))}";
 
             return result;
         }

@@ -1,4 +1,4 @@
-﻿using MatrixHelper;
+﻿using MatrixExtensions;
 using NeuralNetBuilder.FactoriesAndParameters;
 using System;
 using System.Linq;
@@ -37,7 +37,7 @@ namespace NeuralNetBuilder
 
         #region IBaseNet
 
-        public async Task FeedForwardAsync(IMatrix input)
+        public async Task FeedForwardAsync(float[] input)
         {
             await Task.Run(() =>
             {
@@ -45,7 +45,7 @@ namespace NeuralNetBuilder
                 Output = Layers.Last().Output;
             });
         }
-        public IMatrix Output { get; internal set; }
+        public float[] Output { get; internal set; }
     
         #endregion
 
@@ -63,7 +63,7 @@ namespace NeuralNetBuilder
                 result += $"\n{layer.ToLog()}";
             }
 
-            result += $"{Output?.ToLog()}";
+            result += $"{Output?.ToLog(nameof(Output))}";
             return result;
         }
 

@@ -1,4 +1,4 @@
-﻿using MatrixHelper;
+﻿using MatrixExtensions;
 using NeuralNetBuilder.ActivatorFunctions;
 using NeuralNetBuilder.CostFunctions;
 using System;
@@ -7,12 +7,12 @@ namespace NeuralNetBuilder
 {
     public interface ILearningLayer : ILayer
     {
-        IMatrix DCDA { get; set; }
-        IMatrix DADZ { get; set; }
-        IMatrix Delta { get; set; }
-        IMatrix WeightsChange { get; set; }
-        IMatrix BiasesChange { get; set; }
-        void ProcessDelta(IMatrix target, ICostFunction costFunction);
+        float[] DCDA { get; set; }
+        float[] DADZ { get; set; }
+        float[] Delta { get; set; }
+        float[,] WeightsChange { get; set; }
+        float[] BiasesChange { get; set; }
+        void ProcessDelta(float[] target, ICostFunction costFunction);
         void AdaptWeightsAndBiases(float learningRate);
     }
 
@@ -20,7 +20,8 @@ namespace NeuralNetBuilder
     {
         #region fields & ctor
 
-        IMatrix dCDA, dACZ, delta, weightsChange, biasesChange;
+        float[] dCDA, dACZ, delta, biasesChange;
+        float[,] weightsChange;
 
         internal LearningLayer() { }
 
@@ -28,7 +29,7 @@ namespace NeuralNetBuilder
 
         #region public
 
-        public IMatrix DCDA
+        public float[] DCDA
         {
             get { return dCDA; }
             set
@@ -40,7 +41,7 @@ namespace NeuralNetBuilder
                 }
             }
         }
-        public IMatrix DADZ
+        public float[] DADZ
         {
             get { return dACZ; }
             set
@@ -52,7 +53,7 @@ namespace NeuralNetBuilder
                 }
             }
         }
-        public IMatrix Delta
+        public float[] Delta
         {
             get { return delta; }
             set
@@ -64,7 +65,7 @@ namespace NeuralNetBuilder
                 }
             }
         }
-        public IMatrix WeightsChange
+        public float[,] WeightsChange
         {
             get { return weightsChange; }
             set
@@ -76,7 +77,7 @@ namespace NeuralNetBuilder
                 }
             }
         }
-        public IMatrix BiasesChange
+        public float[] BiasesChange
         {
             get { return biasesChange; }
             set
@@ -89,7 +90,7 @@ namespace NeuralNetBuilder
             }
         }
 
-        public void ProcessDelta(IMatrix target, ICostFunction costFunction)
+        public void ProcessDelta(float[] target, ICostFunction costFunction)
         {
             SetDCDA(target, costFunction);
             SetDADZ();
@@ -101,20 +102,28 @@ namespace NeuralNetBuilder
             if (ReceptiveField != null)
             {
                 // Get Change of Weights
-                PerformantOperations.SetScalarProduct(Delta, ReceptiveField.Output.GetTranspose(), WeightsChange);
-                PerformantOperations.Multiplicate(WeightsChange, -learningRate, WeightsChange);
+
+                weightsChange = Delta.Multiply_ScalarProduct_ColumnWithRow(ReceptiveField.Output);
+                //PerformantOperations.SetScalarProduct(Delta, ReceptiveField.Output.GetTranspose(), WeightsChange);
+
+                weightsChange = weightsChange.Multiply(-learningRate);
+                //PerformantOperations.Multiplicate(WeightsChange, -learningRate, WeightsChange);
+
 
                 // Add Change to Weights
-                PerformantOperations.Add(Weights, WeightsChange, Weights);
+
+                Weights = Weights.Add(WeightsChange);
+                //PerformantOperations.Add(Weights, WeightsChange, Weights);
 
                 if (Biases != null)
                 {
                     #region slow but tested
 
-                    IMatrix etaTimesDelta = new Matrix(Biases.m);   // perf!
+                    float[] etaTimesDelta = Delta.Multiply(learningRate);
+                    //PerformantOperations.Multiplicate(Delta, learningRate, etaTimesDelta);  // check!
 
-                    PerformantOperations.Multiplicate(Delta, learningRate, etaTimesDelta);  // check!
-                    PerformantOperations.Subtract(Biases, etaTimesDelta, Biases);   // check!
+                    Biases = Biases.Subtract(etaTimesDelta);
+                    //PerformantOperations.Subtract(Biases, etaTimesDelta, Biases);   // check!
 
                     #endregion
 
@@ -133,27 +142,30 @@ namespace NeuralNetBuilder
 
         #region helpers
 
-        private void SetDCDA(IMatrix target, ICostFunction costFunction)
+        private void SetDCDA(float[] target, ICostFunction costFunction)
         {
             if (ProjectiveField == null)
             {
-                DCDA.ForEach(x => 0);
-                costFunction.Derivation(Output, target, DCDA);
+                DCDA.ForEach(x => 0);   // redundant?
+                DCDA = costFunction.Derivation(Output, target);
             }
             else
             {
-                PerformantOperations.SetScalarProduct(ProjectiveField.Weights.GetTranspose(), (ProjectiveField as ILearningLayer).Delta, DCDA);   // ta cast vs perf -> LearningNet incl LearningLayers?
+                DCDA = ProjectiveField.Weights.Transpose().Multiply_MatrixWithColumnVector((ProjectiveField as ILearningLayer).Delta);
+                //PerformantOperations.SetScalarProduct(ProjectiveField.Weights.GetTranspose(), (ProjectiveField as ILearningLayer).Delta, DCDA);   // ta cast vs perf -> LearningNet incl LearningLayers?
             }
         }
         private void SetDADZ()
         {
-            DADZ.ForEach(x => 0);
-            ActivationFunction.Derivation(Input, DADZ);
+            DADZ.ForEach(x => 0);   // redundant?
+            DADZ = ActivationFunction.Derivation(Input);
         }
         private void SetDelta()
         {
             // Delta.ForEach(x => 0);
-            PerformantOperations.SetHadamardProduct(DCDA, DADZ, Delta);
+            Delta = DCDA.Multiply_Elementwise(DADZ);
+            // PerformantOperations.SetHadamardProduct(DCDA, DADZ, Delta);
+
         }
 
         #endregion
@@ -174,13 +186,13 @@ namespace NeuralNetBuilder
                 ? $", {nameof(ProjectiveField)}: None"
                 : $", {nameof(ProjectiveField)}: {ProjectiveField.Id}";
             result += ")\n";
-            result += $"{Input?.ToLog()}";
-            result += $"{Output?.ToLog()}";
-            result += $"{Weights?.ToLog()}";
-            result += $"{Biases?.ToLog()}";
-            result += $"{DCDA?.ToLog()}";
-            result += $"{DADZ?.ToLog()}";
-            result += $"{Delta?.ToLog()}";
+            result += $"{Input?.ToLog(nameof(Input))}";
+            result += $"{Output?.ToLog(nameof(Output))}";
+            result += $"{Weights?.ToLog(nameof(Weights))}";
+            result += $"{Biases?.ToLog(nameof(Biases))}";
+            result += $"{DCDA?.ToLog(nameof(DCDA))}";
+            result += $"{DADZ?.ToLog(nameof(DADZ))}";
+            result += $"{Delta?.ToLog(nameof(Delta))}";
 
             return result;
         }

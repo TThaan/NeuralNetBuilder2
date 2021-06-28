@@ -1,4 +1,4 @@
-﻿using MatrixHelper;
+﻿using MatrixExtensions;
 
 namespace NeuralNetBuilder.ActivatorFunctions
 {
@@ -7,9 +7,9 @@ namespace NeuralNetBuilder.ActivatorFunctions
     /// </summary>
     public class SoftMaxWithCrossEntropyLoss : SoftMax
     {
-        public override void Derivation(IMatrix weightedInput, IMatrix result)
+        public override float[] Derivation(float[] weightedInput)
         {
-            result.ForEach(weightedInput, x => 1);
+            return weightedInput.ForEach(x => 1);
         }
     }
 }

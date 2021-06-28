@@ -1,4 +1,4 @@
-﻿using MatrixHelper;
+﻿using MatrixExtensions;
 using NeuralNetBuilder.CostFunctions;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,7 +10,7 @@ namespace NeuralNetBuilder
         ILearningLayer[] Layers { get; }
         ICostFunction CostFunction { get; }
         float CurrentTotalCost { get; }
-        Task PropagateBackAsync(IMatrix target);
+        Task PropagateBackAsync(float[] target);
         Task AdjustWeightsAndBiasesAsync(float learningRate);
         INet GetNet();
     }
@@ -25,7 +25,7 @@ namespace NeuralNetBuilder
 
         #region IBaseNet
 
-        public async Task FeedForwardAsync(IMatrix input)
+        public async Task FeedForwardAsync(float[] input)
         {
             await Task.Run(() =>
             {
@@ -39,10 +39,10 @@ namespace NeuralNetBuilder
         #region ILearningNet
 
         public ILearningLayer[] Layers { get; internal set; }
-        public IMatrix Output { get; internal set; }
+        public float[] Output { get; internal set; }
         public ICostFunction CostFunction { get; internal set; }
         public float CurrentTotalCost { get; internal set; }
-        public async Task PropagateBackAsync(IMatrix target)
+        public async Task PropagateBackAsync(float[] target)
         {
             await Task.Run(() =>
             {
@@ -80,7 +80,7 @@ namespace NeuralNetBuilder
                 result += $"\n{layer.ToLog()}";
             }
 
-            result += $"{Output?.ToLog()}";
+            result += $"{Output?.ToLog(nameof(Output))}";
             return result;
         }
 

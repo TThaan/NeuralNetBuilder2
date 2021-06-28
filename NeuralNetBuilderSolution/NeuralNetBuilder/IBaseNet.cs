@@ -1,5 +1,4 @@
 ﻿using CustomLogger;
-using MatrixHelper;
 using System.Threading.Tasks;
 
 namespace NeuralNetBuilder
@@ -7,7 +6,7 @@ namespace NeuralNetBuilder
     public interface IBaseNet : ILoggable
     {
         // int L { get; }
-        Task FeedForwardAsync(IMatrix input);
-        IMatrix Output { get; }
+        Task FeedForwardAsync(float[] input);
+        float[] Output { get; }
     }
 }

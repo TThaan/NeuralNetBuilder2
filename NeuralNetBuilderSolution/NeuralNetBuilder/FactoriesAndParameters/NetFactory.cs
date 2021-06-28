@@ -1,4 +1,4 @@
-﻿using MatrixHelper;
+﻿using MatrixExtensions;
 using NeuralNetBuilder.CostFunctions;
 using NeuralNetBuilder.WeightInits;
 using System;
@@ -89,16 +89,16 @@ namespace NeuralNetBuilder.FactoriesAndParameters
 
         #region helpers
 
-        private static IMatrix GetWeights(ILayerParameters layerParameters, ILayerParameters receptiveLayerParameters)
+        private static float[,] GetWeights(ILayerParameters layerParameters, ILayerParameters receptiveLayerParameters)
         {
             int m = layerParameters.NeuronsPerLayer;
             int n = receptiveLayerParameters.NeuronsPerLayer;
             float weightMin = layerParameters.WeightMin;
             float weightMax = layerParameters.WeightMax;
 
-            return new Matrix(m, n, $"Layer {layerParameters.Id}.Weights").ForEach(x => GetRandomFloat(weightMin, weightMax));
+            return new float[m, n].ForEach(x => GetRandomFloat(weightMin, weightMax));
         }
-        private static IMatrix GetBiases(ILayerParameters layerParameters)
+        private static float[] GetBiases(ILayerParameters layerParameters)
         {
             if ((layerParameters.BiasMax - layerParameters.BiasMin) == 0)
                 return null;
@@ -107,7 +107,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
             float biasMin = layerParameters.BiasMin;
             float biasMax = layerParameters.BiasMax;
 
-            return new Matrix(m, $"Layer {layerParameters.Id}.Biases").ForEach(x => GetRandomFloat(biasMin, biasMax));
+            return new float[m].ForEach(x => GetRandomFloat(biasMin, biasMax));
         }
         private static float GetRandomFloat(float min, float max)
         {
