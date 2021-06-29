@@ -1,5 +1,7 @@
 ﻿using MatrixExtensions;
 using NeuralNetBuilder.FactoriesAndParameters;
+using NeuralNetBuilder.FactoriesAndParameters.JsonConverters;
+using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -24,7 +26,8 @@ namespace NeuralNetBuilder
         #endregion
 
         #region INet
-        
+
+        [JsonProperty(ItemConverterType = typeof(GenericJsonConverter<Layer>))]
         public ILayer[] Layers { get; set; }
         public INet GetCopy()
         {

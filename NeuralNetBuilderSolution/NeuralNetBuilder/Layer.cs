@@ -1,6 +1,8 @@
 ﻿using CustomLogger;
 using MatrixExtensions;
 using NeuralNetBuilder.ActivatorFunctions;
+using NeuralNetBuilder.FactoriesAndParameters.JsonConverters;
+using Newtonsoft.Json;
 using System;
 
 namespace NeuralNetBuilder
@@ -84,6 +86,7 @@ namespace NeuralNetBuilder
                 }
             }
         }
+        [JsonConverter(typeof(JsonConverter_ActivatorFunctions))]
         public ActivationFunction ActivationFunction
         {
             get { return activationFunction; }
@@ -120,6 +123,7 @@ namespace NeuralNetBuilder
                 }
             }
         }
+        [JsonIgnore]
         public ILayer ReceptiveField
         {
             get { return receptiveField; }
@@ -132,6 +136,7 @@ namespace NeuralNetBuilder
                 }
             }
         }
+        [JsonIgnore]
         public ILayer ProjectiveField
         {
             get { return projectiveField; }
@@ -200,10 +205,10 @@ namespace NeuralNetBuilder
                 ? $", {nameof(ProjectiveField)}: None"
                 : $", {nameof(ProjectiveField)}: {ProjectiveField.Id}";
             result += ")\n";
-            result += $"{Input?.ToLog(nameof(Input))}";
-            result += $"{Output?.ToLog(nameof(Output))}";
-            result += $"{Weights?.ToLog(nameof(Weights))}";
-            result += $"{Biases?.ToLog(nameof(Biases))}";
+            result += $"{Input.ToLog(nameof(Input))}";
+            result += $"{Output.ToLog(nameof(Output))}";
+            result += $"{Weights.ToLog(nameof(Weights))}";
+            result += $"{Biases.ToLog(nameof(Biases))}";
 
             return result;
         }

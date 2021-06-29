@@ -231,7 +231,7 @@ namespace NeuralNetBuilder
                 {
                     for (currentSample = CurrentSample; currentSample < samplesTotal; CurrentSample++)
                     {
-                        await LearningNet.FeedForwardAsync(sampleSet.TrainingSamples[currentSample].Input);
+                        await learningNet.FeedForwardAsync(sampleSet.TrainingSamples[currentSample].Input);
                         await learningNet.PropagateBackAsync(sampleSet.TrainingSamples[currentSample].ExpectedOutput);
                         CurrentTotalCost = learningNet.CurrentTotalCost;
                         await learningNet.AdjustWeightsAndBiasesAsync(LearningRate);

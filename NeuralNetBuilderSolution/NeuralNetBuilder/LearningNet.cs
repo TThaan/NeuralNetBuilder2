@@ -1,5 +1,7 @@
 ﻿using MatrixExtensions;
 using NeuralNetBuilder.CostFunctions;
+using NeuralNetBuilder.FactoriesAndParameters.JsonConverters;
+using Newtonsoft.Json;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -38,6 +40,7 @@ namespace NeuralNetBuilder
 
         #region ILearningNet
 
+        [JsonProperty(ItemConverterType = typeof(GenericJsonConverter<LearningLayer>))]
         public ILearningLayer[] Layers { get; internal set; }
         public float[] Output { get; internal set; }
         public ICostFunction CostFunction { get; internal set; }

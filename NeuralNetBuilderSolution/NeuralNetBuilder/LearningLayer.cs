@@ -2,6 +2,7 @@
 using NeuralNetBuilder.ActivatorFunctions;
 using NeuralNetBuilder.CostFunctions;
 using System;
+using System.Linq;
 
 namespace NeuralNetBuilder
 {
@@ -152,6 +153,10 @@ namespace NeuralNetBuilder
             else
             {
                 DCDA = ProjectiveField.Weights.Transpose().Multiply_MatrixWithColumnVector((ProjectiveField as ILearningLayer).Delta);
+                //if (dCDA.Any(x => float.IsNaN(x) || float.IsInfinity(x)))
+                //{
+
+                //}
                 //PerformantOperations.SetScalarProduct(ProjectiveField.Weights.GetTranspose(), (ProjectiveField as ILearningLayer).Delta, DCDA);   // ta cast vs perf -> LearningNet incl LearningLayers?
             }
         }
@@ -186,13 +191,13 @@ namespace NeuralNetBuilder
                 ? $", {nameof(ProjectiveField)}: None"
                 : $", {nameof(ProjectiveField)}: {ProjectiveField.Id}";
             result += ")\n";
-            result += $"{Input?.ToLog(nameof(Input))}";
-            result += $"{Output?.ToLog(nameof(Output))}";
-            result += $"{Weights?.ToLog(nameof(Weights))}";
-            result += $"{Biases?.ToLog(nameof(Biases))}";
-            result += $"{DCDA?.ToLog(nameof(DCDA))}";
-            result += $"{DADZ?.ToLog(nameof(DADZ))}";
-            result += $"{Delta?.ToLog(nameof(Delta))}";
+            result += $"{Input.ToLog(nameof(Input))}";
+            result += $"{Output.ToLog(nameof(Output))}";
+            result += $"{Weights.ToLog(nameof(Weights))}";
+            result += $"{Biases.ToLog(nameof(Biases))}";
+            result += $"{DCDA.ToLog(nameof(DCDA))}";
+            result += $"{DADZ.ToLog(nameof(DADZ))}";
+            result += $"{Delta.ToLog(nameof(Delta))}";
 
             return result;
         }
