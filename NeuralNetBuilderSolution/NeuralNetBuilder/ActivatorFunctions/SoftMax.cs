@@ -16,18 +16,16 @@ namespace NeuralNetBuilder.ActivatorFunctions
             return weightedInput * (1 - weightedInput);
         }
 
-        public override float[] Activation(float[] weightedInput)
+        public override void Activation(float[] weightedInput, float[] result)
         {
-            var result = weightedInput.ForEach(x => Activation(x));
+            weightedInput.ForEach(x => Activation(x), result);
             
             float sum = result.Sum();
-            if (sum != 0) result = result.ForEach(x => x / sum);
-
-            return result;
+            if (sum != 0) result.ForEach(x => x / sum, result);
         }
-        public override float[] Derivation(float[] weightedInput)
+        public override void Derivation(float[] weightedInput, float[] result)
         {
-            return weightedInput.ForEach(x => Derivation(x));
+            weightedInput.ForEach(x => Derivation(x), result);
         }
     }
 }

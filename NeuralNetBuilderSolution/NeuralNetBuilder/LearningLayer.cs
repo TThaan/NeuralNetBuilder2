@@ -104,26 +104,27 @@ namespace NeuralNetBuilder
             {
                 // Get Change of Weights
 
-                weightsChange = Delta.Multiply_ScalarProduct_ColumnWithRow(ReceptiveField.Output);
+                Delta.Multiply_ScalarProduct_ColumnWithRow(ReceptiveField.Output, weightsChange);
                 //PerformantOperations.SetScalarProduct(Delta, ReceptiveField.Output.GetTranspose(), WeightsChange);
 
-                weightsChange = weightsChange.Multiply(-learningRate);
+                weightsChange.Multiply(-learningRate, weightsChange);
                 //PerformantOperations.Multiplicate(WeightsChange, -learningRate, WeightsChange);
 
 
                 // Add Change to Weights
 
-                Weights = Weights.Add(WeightsChange);
+                Weights.Add(WeightsChange, Weights);
                 //PerformantOperations.Add(Weights, WeightsChange, Weights);
 
                 if (Biases != null)
                 {
                     #region slow but tested
 
-                    float[] etaTimesDelta = Delta.Multiply(learningRate);
+                    float[] etaTimesDelta = new float[Biases.Length];   // unperformant!
+                    Delta.Multiply(learningRate, etaTimesDelta);
                     //PerformantOperations.Multiplicate(Delta, learningRate, etaTimesDelta);  // check!
 
-                    Biases = Biases.Subtract(etaTimesDelta);
+                    Biases.Subtract(etaTimesDelta, Biases);
                     //PerformantOperations.Subtract(Biases, etaTimesDelta, Biases);   // check!
 
                     #endregion
@@ -147,12 +148,13 @@ namespace NeuralNetBuilder
         {
             if (ProjectiveField == null)
             {
-                DCDA.ForEach(x => 0);   // redundant?
-                DCDA = costFunction.Derivation(Output, target);
+                DCDA.ForEach(x => 0, DCDA);   // redundant?
+                costFunction.Derivation(Output, target, DCDA);
             }
             else
             {
-                DCDA = ProjectiveField.Weights.Transpose().Multiply_MatrixWithColumnVector((ProjectiveField as ILearningLayer).Delta);
+                ProjectiveField.Weights.Transpose(ProjectiveField.WeightsTransposed);   // Check..
+                ProjectiveField.WeightsTransposed.Multiply_MatrixWithColumnVector((ProjectiveField as ILearningLayer).Delta, DCDA);
                 //if (dCDA.Any(x => float.IsNaN(x) || float.IsInfinity(x)))
                 //{
 
@@ -162,13 +164,13 @@ namespace NeuralNetBuilder
         }
         private void SetDADZ()
         {
-            DADZ.ForEach(x => 0);   // redundant?
-            DADZ = ActivationFunction.Derivation(Input);
+            DADZ.ForEach(x => 0, DADZ);   // redundant?
+            ActivationFunction.Derivation(Input, DADZ);
         }
         private void SetDelta()
         {
             // Delta.ForEach(x => 0);
-            Delta = DCDA.Multiply_Elementwise(DADZ);
+            DCDA.Multiply_Elementwise(DADZ, Delta);
             // PerformantOperations.SetHadamardProduct(DCDA, DADZ, Delta);
 
         }

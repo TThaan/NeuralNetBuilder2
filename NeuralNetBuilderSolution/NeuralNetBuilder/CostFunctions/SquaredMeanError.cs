@@ -4,15 +4,15 @@ namespace NeuralNetBuilder.CostFunctions
 {
     public class SquaredMeanError : ICostFunction
     {
-        public float[] Cost(float[] output, float[] target) 
+        public void Cost(float[] output, float[] target, float[] result) 
         {
             // result = (target - output) * (target - output); //.5f * 
-            var tmp = target.Subtract(output);
-            return tmp.Multiply_Elementwise(tmp);
+            target.Subtract(output, result);
+            result.Multiply_Elementwise(result, result);
         }
-        public float[] Derivation(float[] output, float[] target)
+        public void Derivation(float[] output, float[] target, float[] result)
         {
-            return output.Subtract(target);
+            output.Subtract(target, result);
         }
         public float GetTotalCost(float[] output, float[] target)
         {

@@ -14,6 +14,7 @@ namespace NeuralNetBuilder
         float[] Input { get; set; }
         float[] Output { get; set; }
         float[,] Weights { get; set; }
+        float[,] WeightsTransposed { get; set; }
         float[] Biases { get; set; }
         ActivationFunction ActivationFunction { get; set; }
         ILayer ReceptiveField { get; set; }
@@ -28,7 +29,7 @@ namespace NeuralNetBuilder
 
         int id, n;
         float[] input, output, biases;
-        float[,] weights;
+        float[,] weights, weightsTransposed;
         ILayer receptiveField, projectiveField;
         ActivationFunction activationFunction;
 
@@ -111,6 +112,18 @@ namespace NeuralNetBuilder
                 }
             }
         }
+        public float[,] WeightsTransposed
+        {
+            get { return weightsTransposed == null ? weightsTransposed = weights.Transpose() : weightsTransposed ; }
+            set
+            {
+                if (weightsTransposed != value)
+                {
+                    weightsTransposed = value;
+                    // OnPropertyChanged();
+                }
+            }
+        }
         public float[] Biases
         {
             get { return biases; }
@@ -165,25 +178,25 @@ namespace NeuralNetBuilder
         {
             if (originalInput != null)
             {
-                Input = originalInput.ForEach(x => x);
+                originalInput.ForEach(x => x, Input);
             }
             else
             {
                 // Input.ForEach(x => 0); // check!
 
-                Input = Weights.Multiply_MatrixWithColumnVector(ReceptiveField.Output);
+                Weights.Multiply_MatrixWithColumnVector(ReceptiveField.Output, Input);
                 //PerformantOperations.SetScalarProduct(Weights, ReceptiveField.Output, Input);
             }
 
             if (Biases != null)
-                Input = Input.Add(Biases);
+                Input.Add(Biases, Input);
                 //PerformantOperations.Add(Input, Biases, Input); // check!
         }
         void SetOutput()
         {
-            Output?.ForEach(x => 0); // check!
+            Output?.ForEach(x => 0, Output); // check! redundant?
 
-            Output = ActivationFunction.Activation(Input);
+            ActivationFunction.Activation(Input, Output);
         }
 
         #endregion

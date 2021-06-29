@@ -12,11 +12,11 @@ namespace NeuralNetBuilder.ActivatorFunctions
         public abstract float Derivation(float weightedInput);
         public virtual void Activation(float[] weightedInput, float[] result)
         {
-            result.ForEach(weightedInput, x => Activation(x));
+            result.ForEach(x => Activation(x), weightedInput);
         }
         public virtual void Derivation(float[] weightedInput, float[] result)
         {
-            result.ForEach(weightedInput, x => Derivation(x));
+            result.ForEach(x => Derivation(x), weightedInput);
         }
     }
 }

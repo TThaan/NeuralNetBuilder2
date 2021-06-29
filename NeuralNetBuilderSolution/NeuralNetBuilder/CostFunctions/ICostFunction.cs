@@ -2,8 +2,8 @@
 {
     public interface ICostFunction
     {
-        float[] Cost(float[] output, float[] target);
-        float[] Derivation(float[] output, float[] target);
+        void Cost(float[] output, float[] target, float[] result);
+        void Derivation(float[] output, float[] target, float[] result);
         float GetTotalCost(float[] output, float[] target);
     }
 }

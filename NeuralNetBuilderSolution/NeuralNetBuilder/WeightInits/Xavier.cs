@@ -10,11 +10,11 @@ namespace NeuralNetBuilder.WeightInits
             if (layer.ActivationFunction.ActivationType == ActivationType.ReLU ||
                 layer.ActivationFunction.ActivationType == ActivationType.LeakyReLU)
             {
-                layer.Weights = layer.Weights.ForEach(x => ForRelu(x, layer.N));
+                layer.Weights.ForEach(x => ForRelu(x, layer.N), layer.Weights);
             }
             else
             {
-                layer.Weights = layer.Weights.ForEach(x => Standard(x, layer.N));
+                layer.Weights.ForEach(x => Standard(x, layer.N), layer.Weights);
             }
         }
 

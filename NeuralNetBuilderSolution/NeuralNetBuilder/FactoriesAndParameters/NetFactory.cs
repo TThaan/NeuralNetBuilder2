@@ -96,7 +96,9 @@ namespace NeuralNetBuilder.FactoriesAndParameters
             float weightMin = layerParameters.WeightMin;
             float weightMax = layerParameters.WeightMax;
 
-            return new float[m, n].ForEach(x => GetRandomFloat(weightMin, weightMax));
+            var result = new float[m, n];
+            result.ForEach(x => GetRandomFloat(weightMin, weightMax), result);
+            return result;
         }
         private static float[] GetBiases(ILayerParameters layerParameters)
         {
@@ -107,7 +109,9 @@ namespace NeuralNetBuilder.FactoriesAndParameters
             float biasMin = layerParameters.BiasMin;
             float biasMax = layerParameters.BiasMax;
 
-            return new float[m].ForEach(x => GetRandomFloat(biasMin, biasMax));
+            var result = new float[m];
+            result.ForEach(x => GetRandomFloat(biasMin, biasMax), result);
+            return result;
         }
         private static float GetRandomFloat(float min, float max)
         {
