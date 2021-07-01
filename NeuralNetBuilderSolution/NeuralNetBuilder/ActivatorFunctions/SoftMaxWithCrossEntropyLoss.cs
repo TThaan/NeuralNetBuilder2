@@ -7,6 +7,8 @@ namespace NeuralNetBuilder.ActivatorFunctions
     /// </summary>
     public class SoftMaxWithCrossEntropyLoss : SoftMax
     {
+        public SoftMaxWithCrossEntropyLoss() => ActivationType = ActivationType.SoftMaxWithCrossEntropyLoss;
+
         public override void Derivation(float[] weightedInput, float[] result)
         {
             weightedInput.ForEach(x => 1, result);

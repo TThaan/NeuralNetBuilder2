@@ -7,6 +7,8 @@ namespace NeuralNetBuilder.ActivatorFunctions
     [Serializable]
     public class SoftMax : ActivationFunction
     {
+        public SoftMax() => ActivationType = ActivationType.SoftMax;
+
         public override float Activation(float weightedInput)
         {
             return (float)Math.Exp(weightedInput);

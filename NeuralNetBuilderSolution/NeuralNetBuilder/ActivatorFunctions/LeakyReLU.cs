@@ -5,6 +5,8 @@ namespace NeuralNetBuilder.ActivatorFunctions
     [Serializable]
     public class LeakyReLU : ActivationFunction
     {
+        public LeakyReLU() => ActivationType = ActivationType.LeakyReLU;
+
         public override float Activation(float weightedInput)
         {
             return weightedInput >= 0 ? weightedInput : weightedInput/100;

@@ -5,6 +5,8 @@ namespace NeuralNetBuilder.ActivatorFunctions
     [Serializable]
     public class ReLU : ActivationFunction
     {
+        public ReLU() => ActivationType = ActivationType.ReLU;
+
         public override float Activation(float weightedInput)
         {
             return weightedInput >= 0 ? weightedInput : 0;

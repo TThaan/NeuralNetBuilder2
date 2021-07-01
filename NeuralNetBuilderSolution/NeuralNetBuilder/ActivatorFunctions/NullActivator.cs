@@ -5,6 +5,8 @@ namespace NeuralNetBuilder.ActivatorFunctions
     [Serializable]
     public class NullActivator : ActivationFunction
     {
+        public NullActivator() => ActivationType = ActivationType.NullActivator;
+
         public override float Activation(float weightedInput)
         {
             return weightedInput;

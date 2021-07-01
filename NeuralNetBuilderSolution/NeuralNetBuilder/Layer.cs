@@ -114,7 +114,7 @@ namespace NeuralNetBuilder
         }
         public float[,] WeightsTransposed
         {
-            get { return weightsTransposed == null ? weightsTransposed = weights.Transpose() : weightsTransposed ; }
+            get { return weightsTransposed == null ? weightsTransposed = weights?.Transpose() : weightsTransposed ; }
             set
             {
                 if (weightsTransposed != value)

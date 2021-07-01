@@ -56,7 +56,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters.JsonConverters
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            //serializer.TypeNameHandling = TypeNameHandling.All;
+            // Do I need to "lead" the compiler to here?
             serializer.Serialize(writer, value);
         }
     }

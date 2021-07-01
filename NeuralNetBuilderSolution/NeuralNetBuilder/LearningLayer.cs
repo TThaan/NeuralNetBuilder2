@@ -100,6 +100,8 @@ namespace NeuralNetBuilder
         }
         public void AdaptWeightsAndBiases(float learningRate)
         {
+            WeightsTransposed = null;
+
             if (ReceptiveField != null)
             {
                 // Get Change of Weights
@@ -155,10 +157,7 @@ namespace NeuralNetBuilder
             {
                 ProjectiveField.Weights.Transpose(ProjectiveField.WeightsTransposed);   // Check..
                 ProjectiveField.WeightsTransposed.Multiply_MatrixWithColumnVector((ProjectiveField as ILearningLayer).Delta, DCDA);
-                //if (dCDA.Any(x => float.IsNaN(x) || float.IsInfinity(x)))
-                //{
 
-                //}
                 //PerformantOperations.SetScalarProduct(ProjectiveField.Weights.GetTranspose(), (ProjectiveField as ILearningLayer).Delta, DCDA);   // ta cast vs perf -> LearningNet incl LearningLayers?
             }
         }

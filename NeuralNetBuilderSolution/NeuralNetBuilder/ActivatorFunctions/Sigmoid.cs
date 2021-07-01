@@ -5,6 +5,8 @@ namespace NeuralNetBuilder.ActivatorFunctions
     [Serializable]
     public class Sigmoid : ActivationFunction
     {
+        public Sigmoid() => ActivationType = ActivationType.Sigmoid;
+
         public override float Activation(float weightedInput)
         {
             return 1 / (1 + (float)Math.Exp(-weightedInput));
