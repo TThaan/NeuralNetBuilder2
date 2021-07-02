@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using MatrixExtensions;
+using NeuralNetBuilder.FactoriesAndParameters;
 
 namespace NeuralNetBuilder
 {
@@ -15,16 +16,16 @@ namespace NeuralNetBuilder
         INet TrainedNet { get; set; }
         ISampleSet SampleSet { get; set; }
         int SamplesTotal { get; set; }
-        int Epochs { get; set; }
+        int Epochs { get; }
         int CurrentEpoch { get; set; }
         int CurrentSample { get; set; }
         float LearningRate { get; set; }
-        float LearningRateChange { get; set; }
+        float LearningRateChange { get; }
         float LastEpochsAccuracy { get; set; }
         float CurrentTotalCost { get; set; }
         TrainerStatus TrainerStatus { get; set; }
         public string Message { get; set; }
-        Task Train(string logName, int epochs);
+        Task Train(INet net, ISampleSet sampleSet, string logName);
         Task TestAsync(Sample[] testingSamples, ILogger logger = default);
         Task Reset();
         event TrainerStatusChangedEventHandler TrainerStatusChanged;
@@ -33,10 +34,11 @@ namespace NeuralNetBuilder
     public class Trainer : ITrainer, INotifyPropertyChanged 
     {
         #region fields
-        
+
+        private readonly ITrainerParameters _parameters;
         ILearningNet learningNet;
         INet originalNet, trainedNet;
-        ISampleSet sampleSet;
+        ISampleSet _sampleSet;
         int samplesTotal, epochs, currentEpoch = 0, currentSample = 0;
         float learningRate, learningRateChange, lastEpochsAccuracy, currentTotalCost;
         TrainerStatus trainerStatus;
@@ -45,6 +47,19 @@ namespace NeuralNetBuilder
         #endregion
 
         #region public
+
+        public Trainer(ITrainerParameters parameters)
+        {
+            _parameters = parameters ?? throw new NullReferenceException(
+                $"{typeof(Trainer)}.ctor: Parameter {nameof(parameters)}.");
+
+            if (_parameters.Epochs == 0 || _parameters.LearningRate == 0)
+                throw new ArgumentException($"{typeof(Trainer)}.ctor: " +
+                    $"Parameters 'Epoch' and 'LearningRate' must be greater than 0.");
+
+            LearningRate = _parameters.LearningRate;
+            TrainerStatus = TrainerStatus.Initialized;    // DIC?
+        }
 
         public INet OriginalNet
         {
@@ -84,12 +99,12 @@ namespace NeuralNetBuilder
         }
         public ISampleSet SampleSet
         {
-            get { return sampleSet; }
+            get { return _sampleSet; }
             set
             {
-                if (sampleSet != value)
+                if (_sampleSet != value)
                 {
-                    sampleSet = value;
+                    _sampleSet = value;
                     OnPropertyChanged();
                 }
             }
@@ -106,18 +121,7 @@ namespace NeuralNetBuilder
                 }
             }
         }
-        public int Epochs
-        {
-            get { return epochs; }
-            set
-            {
-                if (epochs != value)
-                {
-                    epochs = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        public int Epochs => _parameters.Epochs;
         public int CurrentEpoch
         {
             get { return currentEpoch; }
@@ -144,18 +148,6 @@ namespace NeuralNetBuilder
         }
         public float LearningRate
         {
-            get { return learningRate; }
-            set
-            {
-                if (learningRate != value)
-                {
-                    learningRate = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-        public float LearningRateChange
-        {
             get { return learningRateChange; }
             set
             {
@@ -166,6 +158,7 @@ namespace NeuralNetBuilder
                 }
             }
         }
+        public float LearningRateChange => _parameters.LearningRateChange;
         public float LastEpochsAccuracy
         {
             get { return lastEpochsAccuracy; }
@@ -190,7 +183,7 @@ namespace NeuralNetBuilder
                 }
             }
         }
-        public TrainerStatus TrainerStatus
+        public TrainerStatus TrainerStatus   // redundant?
         {
             get { return trainerStatus; }
             set
@@ -216,10 +209,18 @@ namespace NeuralNetBuilder
             }
         }
 
-        public async Task Train(string logName, int epochs)
+        public async Task Train(INet net, ISampleSet sampleSet, string logName) // Better as internal? Only allow access for clients via initializer?
         {
+            // Use Event, don't throw exception here!?
+            // ta: net and sample set cannot be null since this is checked in initializer!
+            OriginalNet = net.GetCopy() ?? throw new NullReferenceException(
+                $"{typeof(Trainer)}.{nameof(Train)}: Parameter {nameof(net)}.");
+            SampleSet = sampleSet ?? throw new NullReferenceException(
+                $"{typeof(Trainer)}.{nameof(Train)}: Parameter {nameof(sampleSet)}.");
+
+            LearningNet = NetFactory.GetLearningNet(net, _parameters.CostType); // CostType as Trainer prop?
+
             SamplesTotal = sampleSet.TrainingSamples.Length;
-            Epochs = epochs;
             TrainerStatus = TrainerStatus.Running;
             Message = "Training";
 
@@ -281,12 +282,12 @@ namespace NeuralNetBuilder
                 LearningNet = null;
                 TrainedNet = null;
                 // SampleSet = null;    // Can be kept?
-                Epochs = 0;
+                //Epochs = 0;
                 currentEpoch = 0;
                 lastEpochsAccuracy = 0;
                 currentSample = 0;
                 LearningRate = 0;
-                LearningRateChange = 0;
+                //LearningRateChange = 0;
                 TrainerStatus = TrainerStatus.Undefined;
             });
         }
@@ -303,9 +304,9 @@ namespace NeuralNetBuilder
             if (currentSample == 1000)
             {
                 LearningRate *= LearningRateChange;
-                await TestAsync(sampleSet.TestingSamples, logger);
+                await TestAsync(_sampleSet.TestingSamples, logger);
                 currentSample = 0;
-                await sampleSet.TrainingSamples.ShuffleAsync();
+                await _sampleSet.TrainingSamples.ShuffleAsync();
             }
         }
 
@@ -343,12 +344,12 @@ namespace NeuralNetBuilder
                 logger?.Log("\n                        * * * T E S T I N G * * *\n\n");
             }
 
-            logger?.Log(sampleSet.TestingSamples[sampleNr].Input.ToLog("Input"));
-            logger?.Log(sampleSet.TestingSamples[sampleNr].ExpectedOutput.ToLog("ExpectedOutput"));
+            logger?.Log(_sampleSet.TestingSamples[sampleNr].Input.ToLog("Input"));
+            logger?.Log(_sampleSet.TestingSamples[sampleNr].ExpectedOutput.ToLog("ExpectedOutput"));
             logger?.Log(learningNet.Output.ToLog(nameof(learningNet.Output)));
             logger?.Log($"\nTestResult: {(isOutputCorrect ? "Correct" : "Wrong")}\n\n");
 
-            if (sampleNr == sampleSet.TestingSamples.Length - 1)
+            if (sampleNr == _sampleSet.TestingSamples.Length - 1)
             {
                 logger?.Log($"CurrentAccuracy: {(float)correct / (correct + wrong)})\n\n");
             }

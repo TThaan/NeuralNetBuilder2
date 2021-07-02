@@ -36,11 +36,21 @@ namespace NeuralNetBuilder
                 OnInitializerStatusChanged("\nYou need a trainer to start training!");
                 return false;
             }
+            if (Net == null)
+            {
+                OnInitializerStatusChanged("\nYou need a net to start training!");
+                return false;
+            }
+            if (SampleSet == null)
+            {
+                OnInitializerStatusChanged("\nYou need a sample set to start training!");
+                return false;
+            }
 
             try
             {
                 OnInitializerStatusChanged($"\n            Training, please wait...\n");
-                await Trainer.Train(LogPath, TrainerParameters.Epochs);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
+                await Trainer.Train(Net, SampleSet,LogPath);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
                 TrainedNet = Trainer.TrainedNet?.GetCopy();
                 OnInitializerStatusChanged($"\n            Finished training.\n");
                 return true;
@@ -68,7 +78,7 @@ namespace NeuralNetBuilder
                 catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
             });
         }
-        public async Task<bool> InitializeTrainerAsync()
+        public async Task<bool> CreateTrainerAsync()
         {
             if (TrainerParameters == null)
             {
@@ -93,8 +103,7 @@ namespace NeuralNetBuilder
                 try
                 {
                     OnInitializerStatusChanged("\nInitializing trainer, please wait...");
-                    ITrainer rawTrainer = TrainerFactory.GetRawTrainer();                                       // as async method?
-                    Trainer = TrainerFactory.InitializeTrainer(rawTrainer, Net, TrainerParameters, SampleSet);  // as async method?
+                    Trainer = new Trainer(TrainerParameters);
                     OnInitializerStatusChanged("Successfully initialized trainer.\n");
                     return true;
                 }
