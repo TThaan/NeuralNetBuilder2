@@ -9,17 +9,36 @@ using System.Threading.Tasks;
 namespace NeuralNetBuilder
 {
     // wa: Just test/run a given net?
-
+    // wa: global parameters? Or in NetParameters?
     public class Initializer
     {
         #region public
 
-        public string NetAndTrainerParametersPath { get; set; } = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\ConsoleApi_NetAndTrainerParameters_test.txt";
-        public string LogPath { get; set; } = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\ConsoleApi_Log.txt";
-        public string SampleSetParametersPath { get; set; } = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\ConsoleApi_SampleSetParameters.txt";
-        public string SampleSetPath { get; set; } = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\ConsoleApi_SampleSet.txt";
-        public string InitializedNetPath { get; set; } = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\ConsoleApi_InitializedNet_test.txt";
-        public string TrainedNetPath { get; set; } = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\ConsoleApi_TrainedNet.txt";
+        #region file names and paths
+
+        public string FileName_InitializedNet { get; set; } = "InitializedNet";
+        public string FileName_TrainedNet { get; set; } = "TrainedNet";
+        public string FileName_SampleSet { get; set; } = "SampleSet";
+        public string FileName_SampleSetParameters { get; set; } = "SampleSetParameters";
+        public string FileName_NetParameters { get; set; } = "NetParameters";
+        public string FileName_TrainerParameters { get; set; } = "TrainerParameters";
+        public string FileName_Log { get; set; } = "Log";
+
+        public string GeneralPath { get; set; } = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\";
+        public string FileName_Prefix { get; set; } = default;
+        public string FileName_Suffix { get; set; } = ".txt";
+
+        public string NetParametersPath { get; set; }
+        public string TrainerParametersPath { get; set; }
+        public string LogPath { get; set; }
+        public string SampleSetParametersPath { get; set; }
+        public string SampleSetPath { get; set; }
+        public string InitializedNetPath { get; set; }
+        public string TrainedNetPath { get; set; }
+
+        #endregion
+
+        #region properties
 
         public ISampleSetParameters SampleSetParameters { get; set; }
         public INetParameters NetParameters { get; set; }
@@ -28,6 +47,11 @@ namespace NeuralNetBuilder
         public INet Net { get; set; }
         public INet TrainedNet { get; set; }
         public ITrainer Trainer { get; set; }
+        public bool IsLogged { get; set; }
+
+        #endregion
+
+        #region methods
 
         public async Task<bool> TrainAsync()
         {
@@ -50,14 +74,14 @@ namespace NeuralNetBuilder
             try
             {
                 OnInitializerStatusChanged($"\n            Training, please wait...\n");
-                await Trainer.Train(Net, SampleSet,LogPath);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
+                await Trainer.Train(Net, SampleSet, IsLogged ? LogPath : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
                 TrainedNet = Trainer.TrainedNet?.GetCopy();
                 OnInitializerStatusChanged($"\n            Finished training.\n");
                 return true;
             }
             catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
         }
-        public async Task<bool> InitializeNetAsync()  // Task<bool> if method succeeded?
+        public async Task<bool> CreateNetAsync()  // Task<bool> if method succeeded?
         {
             if (NetParameters == null)
             {
@@ -70,8 +94,7 @@ namespace NeuralNetBuilder
                 try
                 {
                     OnInitializerStatusChanged("\nInitializing net, please wait...");
-                    INet rawNet = NetFactory.CreateRawNet();                // as async method?
-                    Net = NetFactory.InitializeNet(rawNet, NetParameters);  // as async method?
+                    Net = NetFactory.CreateNet(NetParameters);  // as async method?
                     OnInitializerStatusChanged("Successfully initialized net.\n");
                     return true;
                 }
@@ -110,21 +133,36 @@ namespace NeuralNetBuilder
                 catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
             });
         }
-        public async Task<bool> LoadNetAndTrainerParametersAsync()
+        public async Task<bool> LoadNetParametersAsync()
         {
             return await Task.Run(() =>
             {
                 try
                 {
-                    OnInitializerStatusChanged("\nLoading net & trainer parameters from file, please wait...");
-                    var jasonParams = File.ReadAllText(NetAndTrainerParametersPath);
+                    OnInitializerStatusChanged("\nLoading net parameters from file, please wait...");
+                    var jasonParams = File.ReadAllText(NetParametersPath);
                     var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
                     NetParameters = sp.NetParameters;
-                    TrainerParameters = sp.TrainerParameters;
-                    OnInitializerStatusChanged("Successfully loaded net & trainer parameters.\n");
+                    OnInitializerStatusChanged("Successfully loaded net parameters.\n");
                     return true;
                 }
-                catch (Exception e) { OnInitializerStatusChanged($"That didn't work.\n({e.Message})"); return false; }
+                catch (Exception e) { OnInitializerStatusChanged($"{e.Message}"); return false; }
+            });
+        }
+        public async Task<bool> LoadTrainerParametersAsync()
+        {
+            return await Task.Run(() =>
+            {
+                try
+                {
+                    OnInitializerStatusChanged("\nLoading trainer parameters from file, please wait...");
+                    var jasonParams = File.ReadAllText(TrainerParametersPath);
+                    var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
+                    TrainerParameters = sp.TrainerParameters;
+                    OnInitializerStatusChanged("Successfully loaded trainer parameters.\n");
+                    return true;
+                }
+                catch (Exception e) { OnInitializerStatusChanged($"{e.Message}"); return false; }
             });
         }
         public async Task<bool> LoadSampleSetParametersAsync()
@@ -274,6 +312,8 @@ namespace NeuralNetBuilder
             }
             catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
         }
+
+        #endregion
 
         #endregion
 

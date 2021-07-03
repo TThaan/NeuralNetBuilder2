@@ -16,12 +16,14 @@ namespace NeuralNetBuilder.FactoriesAndParameters
 
         #region public/internal
 
-        internal static INet CreateRawNet()
+        //internal static INet CreateRawNet()
+        //{
+        //    return new Net() { NetStatus = NetStatus.Undefined };
+        //}
+        internal static INet CreateNet(INetParameters netParameters)
         {
-            return new Net() { NetStatus = NetStatus.Undefined };
-        }
-        internal static INet InitializeNet(INet rawNet, INetParameters netParameters)
-        {
+            INet rawNet = new Net() { NetStatus = NetStatus.Undefined };
+
             ILayer[] layers = new ILayer[netParameters.LayerParametersCollection.Count];
             
             for (int i = 0; i < netParameters.LayerParametersCollection.Count; i++)
