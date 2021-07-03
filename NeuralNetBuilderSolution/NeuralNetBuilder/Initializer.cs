@@ -1,4 +1,5 @@
 ﻿using DeepLearningDataProvider;
+using NeuralNetBuilder.Builders;
 using NeuralNetBuilder.FactoriesAndParameters;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -12,37 +13,21 @@ namespace NeuralNetBuilder
     // wa: global parameters? Or in NetParameters?
     public class Initializer
     {
-        #region public
+        #region ctor
 
-        #region file names and paths
-
-        public string FileName_InitializedNet { get; set; } = "InitializedNet";
-        public string FileName_TrainedNet { get; set; } = "TrainedNet";
-        public string FileName_SampleSet { get; set; } = "SampleSet";
-        public string FileName_SampleSetParameters { get; set; } = "SampleSetParameters";
-        public string FileName_NetParameters { get; set; } = "NetParameters";
-        public string FileName_TrainerParameters { get; set; } = "TrainerParameters";
-        public string FileName_Log { get; set; } = "Log";
-
-        public string GeneralPath { get; set; } = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\";
-        public string FileName_Prefix { get; set; } = default;
-        public string FileName_Suffix { get; set; } = ".txt";
-
-        public string NetParametersPath { get; set; }
-        public string TrainerParametersPath { get; set; }
-        public string LogPath { get; set; }
-        public string SampleSetParametersPath { get; set; }
-        public string SampleSetPath { get; set; }
-        public string InitializedNetPath { get; set; }
-        public string TrainedNetPath { get; set; }
+        public Initializer()
+        {
+            Paths = new PathBuilder(OnInitializerStatusChanged);
+            Parameters = new ParameterBuilder(OnInitializerStatusChanged);
+        }
 
         #endregion
 
         #region properties
 
-        public ISampleSetParameters SampleSetParameters { get; set; }
-        public INetParameters NetParameters { get; set; }
-        public ITrainerParameters TrainerParameters { get; set; }
+        public PathBuilder Paths { get; }
+        public ParameterBuilder Parameters { get; }
+
         public ISampleSet SampleSet { get; set; }
         public INet Net { get; set; }
         public INet TrainedNet { get; set; }
@@ -74,7 +59,7 @@ namespace NeuralNetBuilder
             try
             {
                 OnInitializerStatusChanged($"\n            Training, please wait...\n");
-                await Trainer.Train(Net, SampleSet, IsLogged ? LogPath : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
+                await Trainer.Train(Net, SampleSet, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
                 TrainedNet = Trainer.TrainedNet?.GetCopy();
                 OnInitializerStatusChanged($"\n            Finished training.\n");
                 return true;
@@ -83,7 +68,7 @@ namespace NeuralNetBuilder
         }
         public async Task<bool> CreateNetAsync()  // Task<bool> if method succeeded?
         {
-            if (NetParameters == null)
+            if (Parameters.NetParameters == null)
             {
                 OnInitializerStatusChanged("\nYou need net parameters to initialize the net!");
                 return false;
@@ -94,7 +79,7 @@ namespace NeuralNetBuilder
                 try
                 {
                     OnInitializerStatusChanged("\nInitializing net, please wait...");
-                    Net = NetFactory.CreateNet(NetParameters);  // as async method?
+                    Net = NetFactory.CreateNet(Parameters.NetParameters);  // as async method?
                     OnInitializerStatusChanged("Successfully initialized net.\n");
                     return true;
                 }
@@ -103,7 +88,7 @@ namespace NeuralNetBuilder
         }
         public async Task<bool> CreateTrainerAsync()
         {
-            if (TrainerParameters == null)
+            if (Parameters.TrainerParameters == null)
             {
                 OnInitializerStatusChanged("\nYou need trainer parameters to initialize the trainer!");
                 return false;
@@ -126,7 +111,7 @@ namespace NeuralNetBuilder
                 try
                 {
                     OnInitializerStatusChanged("\nInitializing trainer, please wait...");
-                    Trainer = new Trainer(TrainerParameters);
+                    Trainer = new Trainer(Parameters.TrainerParameters);
                     OnInitializerStatusChanged("Successfully initialized trainer.\n");
                     return true;
                 }
@@ -140,9 +125,9 @@ namespace NeuralNetBuilder
                 try
                 {
                     OnInitializerStatusChanged("\nLoading net parameters from file, please wait...");
-                    var jasonParams = File.ReadAllText(NetParametersPath);
+                    var jasonParams = File.ReadAllText(Paths.NetParameters);
                     var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
-                    NetParameters = sp.NetParameters;
+                    Parameters.NetParameters = sp.NetParameters;
                     OnInitializerStatusChanged("Successfully loaded net parameters.\n");
                     return true;
                 }
@@ -156,9 +141,9 @@ namespace NeuralNetBuilder
                 try
                 {
                     OnInitializerStatusChanged("\nLoading trainer parameters from file, please wait...");
-                    var jasonParams = File.ReadAllText(TrainerParametersPath);
+                    var jasonParams = File.ReadAllText(Paths.TrainerParameters);
                     var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
-                    TrainerParameters = sp.TrainerParameters;
+                    Parameters.TrainerParameters = sp.TrainerParameters;
                     OnInitializerStatusChanged("Successfully loaded trainer parameters.\n");
                     return true;
                 }
@@ -167,7 +152,7 @@ namespace NeuralNetBuilder
         }
         public async Task<bool> LoadSampleSetParametersAsync()
         {
-            if (SampleSetParametersPath == default)
+            if (Paths.SampleSetParameters == default)
             {
                 OnInitializerStatusChanged("No path to sample set parameters is set.");
                 return false;
@@ -176,8 +161,8 @@ namespace NeuralNetBuilder
             try
             {
                 OnInitializerStatusChanged("\nLoading sample set parameters from file, please wait...");
-                var jsonString = await File.ReadAllTextAsync(SampleSetParametersPath);
-                SampleSetParameters = JsonConvert.DeserializeObject<SampleSetParameters>(jsonString);
+                var jsonString = await File.ReadAllTextAsync(Paths.SampleSetParameters);
+                Parameters.SampleSetParameters = JsonConvert.DeserializeObject<SampleSetParameters>(jsonString);
                 OnInitializerStatusChanged("Successfully loaded sample set parameters.\n");
                 return true;
             }
@@ -185,7 +170,7 @@ namespace NeuralNetBuilder
         }
         public async Task<bool> CreateSampleSetAsync()
         {
-            if (SampleSetParameters == null)
+            if (Parameters.SampleSetParameters == null)
             {
                 OnInitializerStatusChanged("No sample set parameters are set.");
                 return false;
@@ -196,8 +181,8 @@ namespace NeuralNetBuilder
                 var sampleSetSteward = new SampleSetSteward();
 
                 OnInitializerStatusChanged("\nCreating samples, please wait...");
-                SampleSet = await sampleSetSteward.CreateSampleSetAsync(SampleSetParameters);
-                SampleSet.Parameters = (SampleSetParameters)SampleSetParameters;    // Use interface in data provider?
+                SampleSet = await sampleSetSteward.CreateSampleSetAsync(Parameters.SampleSetParameters);
+                SampleSet.Parameters = (SampleSetParameters)Parameters.SampleSetParameters;    // Use interface in data provider?
                 OnInitializerStatusChanged("Successfully created samples.\n");
                 return true;
             }
@@ -209,7 +194,7 @@ namespace NeuralNetBuilder
             {
                 OnInitializerStatusChanged("\nSaving initialized net, please wait...");
                 var jsonString = JsonConvert.SerializeObject(Net, Formatting.Indented);
-                await File.WriteAllTextAsync(InitializedNetPath, jsonString);
+                await File.WriteAllTextAsync(Paths.InitializedNet, jsonString);
                 OnInitializerStatusChanged("Successfully saved initialized net.\n");
                 return true;
             }
@@ -221,7 +206,7 @@ namespace NeuralNetBuilder
             {
                 OnInitializerStatusChanged("\nSaving trained net, please wait...");
                 var jsonString = JsonConvert.SerializeObject(TrainedNet, Formatting.Indented);
-                await File.WriteAllTextAsync(TrainedNetPath, jsonString);
+                await File.WriteAllTextAsync(Paths.TrainedNet, jsonString);
                 OnInitializerStatusChanged("Successfully saved trained net.\n");
                 return true;
             }
@@ -233,7 +218,7 @@ namespace NeuralNetBuilder
             {
                 OnInitializerStatusChanged("\nSaving sample set, please wait...");
                 var jsonString = JsonConvert.SerializeObject(SampleSet, Formatting.Indented);
-                await File.WriteAllTextAsync(SampleSetPath, jsonString);
+                await File.WriteAllTextAsync(Paths.SampleSet, jsonString);
                 OnInitializerStatusChanged("Successfully saved sample set.\n");
                 return true;
             }
@@ -244,7 +229,7 @@ namespace NeuralNetBuilder
             try
             {
                 OnInitializerStatusChanged("\nLoading initialized net from file, please wait...");
-                var jsonString = await File.ReadAllTextAsync(InitializedNetPath);
+                var jsonString = await File.ReadAllTextAsync(Paths.InitializedNet);
 
                 dynamic dynamicNet = JObject.Parse(jsonString);
                 ILayer[] layers = ((JArray)dynamicNet.Layers).ToObject<Layer[]>();
@@ -269,7 +254,7 @@ namespace NeuralNetBuilder
             try
             {
                 OnInitializerStatusChanged("\nLoading trained net from file, please wait...");
-                var jsonString = await File.ReadAllTextAsync(TrainedNetPath);
+                var jsonString = await File.ReadAllTextAsync(Paths.TrainedNet);
 
                 dynamic dynamicNet = JObject.Parse(jsonString);
                 ILayer[] layers = ((JArray)dynamicNet.Layers).ToObject<Layer[]>();
@@ -294,7 +279,7 @@ namespace NeuralNetBuilder
             try
             {
                 OnInitializerStatusChanged("\nLoading samples from file, please wait...");
-                var jsonString = await File.ReadAllTextAsync(SampleSetPath);
+                var jsonString = await File.ReadAllTextAsync(Paths.SampleSet);
 
                 dynamic dynamicSampleSet = JObject.Parse(jsonString);
                 SampleSetParameters parameters = ((JObject)dynamicSampleSet.Parameters).ToObject<SampleSetParameters>();
@@ -312,8 +297,6 @@ namespace NeuralNetBuilder
             }
             catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
         }
-
-        #endregion
 
         #endregion
 
