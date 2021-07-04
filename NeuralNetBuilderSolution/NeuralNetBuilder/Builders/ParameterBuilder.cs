@@ -1,8 +1,11 @@
 ﻿using DeepLearningDataProvider;
 using NeuralNetBuilder.FactoriesAndParameters;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace NeuralNetBuilder.Builders
 {
@@ -13,14 +16,16 @@ namespace NeuralNetBuilder.Builders
         private IEnumerable<ActivationType> activationTypes;
         private IEnumerable<CostType> costTypes;
         private IEnumerable<WeightInitType> weightInitTypes;
+        private readonly PathBuilder _paths;
         private readonly Action<string> _onInitializerStatusChanged;
 
         private ISampleSetParameters sampleSetParameters;
         private INetParameters netParameters;
         private ITrainerParameters trainerParameters;
 
-        public ParameterBuilder(Action<string> onInitializerStatusChanged)
+        public ParameterBuilder(PathBuilder paths, Action<string> onInitializerStatusChanged)
         {
+            _paths = paths;
             _onInitializerStatusChanged = onInitializerStatusChanged;
         }
 
@@ -28,6 +33,7 @@ namespace NeuralNetBuilder.Builders
 
         #region properties
 
+        public IEnumerable<SetName> SampleSetTemplates => new SampleSetSteward().DefaultSampleSetParameters.Keys;
         public ISampleSetParameters SampleSetParameters
         {
             get
@@ -86,7 +92,7 @@ namespace NeuralNetBuilder.Builders
 
         #endregion
 
-        #region NetParameter methods
+        #region methods: Change NetParameters
 
         public bool SetWeightMax_Globally(float weightMax)
         {
@@ -278,7 +284,7 @@ namespace NeuralNetBuilder.Builders
 
         #endregion
 
-        #region SampleSetParameters methods
+        #region methods: Change SampleSetParameters
 
         public bool SetSampleSetName(SetName name)
         {
@@ -334,6 +340,114 @@ namespace NeuralNetBuilder.Builders
 
             _onInitializerStatusChanged($"Amount of training samples has been set to {SampleSetParameters.AllTrainingSamples}.");
             return true;
+        }
+
+        #endregion
+
+        #region methods: Create, Load & Save
+
+        public void CreateSampleSetParameters()
+        {
+            SampleSetParameters = new SampleSetParameters();
+            _onInitializerStatusChanged("Sample set parameters created.");
+        }
+        public void CreateNetParameters()
+        {
+            NetParameters = new NetParameters();
+            _onInitializerStatusChanged("Net parameters created.");
+        }
+        public void CreateTrainerParameters()
+        {
+            TrainerParameters = new TrainerParameters();
+            _onInitializerStatusChanged("Trainer parameters created.");
+        }
+
+        public async Task<bool> LoadSampleSetParametersAsync()
+        {
+            if (_paths.SampleSetParameters == default)
+            {
+                _onInitializerStatusChanged("No path to sample set parameters is set.");
+                return false;
+            }
+
+            try
+            {
+                _onInitializerStatusChanged("\nLoading sample set parameters from file, please wait...");
+                var jsonString = await File.ReadAllTextAsync(_paths.SampleSetParameters);
+                SampleSetParameters = JsonConvert.DeserializeObject<SampleSetParameters>(jsonString);
+                _onInitializerStatusChanged("Successfully loaded sample set parameters.\n");
+                return true;
+            }
+            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
+        }
+        public async Task<bool> LoadNetParametersAsync()
+        {
+            return await Task.Run(() =>
+            {
+                try
+                {
+                    _onInitializerStatusChanged("\nLoading net parameters from file, please wait...");
+                    var jasonParams = File.ReadAllText(_paths.NetParameters);
+                    var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
+                    NetParameters = sp.NetParameters;
+                    _onInitializerStatusChanged("Successfully loaded net parameters.\n");
+                    return true;
+                }
+                catch (Exception e) { _onInitializerStatusChanged($"{e.Message}"); return false; }
+            });
+        }
+        public async Task<bool> LoadTrainerParametersAsync()
+        {
+            return await Task.Run(() =>
+            {
+                try
+                {
+                    _onInitializerStatusChanged("\nLoading trainer parameters from file, please wait...");
+                    var jasonParams = File.ReadAllText(_paths.TrainerParameters);
+                    var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
+                    TrainerParameters = sp.TrainerParameters;
+                    _onInitializerStatusChanged("Successfully loaded trainer parameters.\n");
+                    return true;
+                }
+                catch (Exception e) { _onInitializerStatusChanged($"{e.Message}"); return false; }
+            });
+        }
+
+        public async Task<bool> SaveSampleSetParametersAsync()
+        {
+            try
+            {
+                _onInitializerStatusChanged("\nSaving sample set parameters, please wait...");
+                var jsonString = JsonConvert.SerializeObject(SampleSetParameters, Formatting.Indented);
+                await File.WriteAllTextAsync(_paths.SampleSetParameters, jsonString);
+                _onInitializerStatusChanged("Successfully saved sample set parameters.\n");
+                return true;
+            }
+            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
+        }
+        public async Task<bool> SaveNetParametersAsync()
+        {
+            try
+            {
+                _onInitializerStatusChanged("\nSaving net parameters, please wait...");
+                var jsonString = JsonConvert.SerializeObject(NetParameters, Formatting.Indented);
+                await File.WriteAllTextAsync(_paths.NetParameters, jsonString);
+                _onInitializerStatusChanged("Successfully saved net parameters.\n");
+                return true;
+            }
+            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
+        }
+        public async Task<bool> SaveTrainerParametersAsync()
+        {
+            try
+            {
+                _onInitializerStatusChanged("\nSaving trainer parameters, please wait...");
+                var jsonString = JsonConvert.SerializeObject(TrainerParameters, Formatting.Indented);
+                await File.WriteAllTextAsync(_paths.TrainerParameters, jsonString);
+                _onInitializerStatusChanged("Successfully saved trainer parameters.\n");
+                return true;
+            }
+            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
         }
 
         #endregion

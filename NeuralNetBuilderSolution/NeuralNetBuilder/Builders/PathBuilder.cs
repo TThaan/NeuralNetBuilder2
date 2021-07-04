@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace NeuralNetBuilder.Builders
 {
@@ -7,6 +8,7 @@ namespace NeuralNetBuilder.Builders
         #region fields & ctor
 
         private readonly Action<string> _onInitializerStatusChanged;
+        string netParameters, trainerParameters, log, sampleSetParameters, sampleSet, initializedNet, trainedNet;
 
         public PathBuilder(Action<string> onInitializerStatusChanged)
         {
@@ -24,26 +26,97 @@ namespace NeuralNetBuilder.Builders
         public string FileName_NetParameters { get; set; } = "NetParameters";
         public string FileName_TrainerParameters { get; set; } = "TrainerParameters";
         public string FileName_Log { get; set; } = "Log";
-        public string FileName_Prefix { get; set; } = default;
+        public string FileName_Prefix { get; set; } = string.Empty;
         public string FileName_Suffix { get; set; } = ".txt";
 
-        public string General { get; set; } = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\";
-        public string NetParameters { get; set; }
-        public string TrainerParameters { get; set; }
-        public string Log { get; set; }
-        public string SampleSetParameters { get; set; }
-        public string SampleSet { get; set; }
-        public string InitializedNet { get; set; }
-        public string TrainedNet { get; set; }
+        public string General { get; set; } = Path.GetTempPath();   // @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\";
+        public string NetParameters
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(netParameters))
+                    return netParameters = Path.Combine(General, FileName_Prefix, FileName_NetParameters, FileName_Suffix);
+                else return netParameters;
+            }
+            set { netParameters = value; }
+        }
+        public string TrainerParameters
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(trainerParameters))
+                    return trainerParameters = Path.Combine(General + FileName_Prefix + FileName_TrainerParameters + FileName_Suffix);
+                else return trainerParameters;
+            }
+            set { trainerParameters = value; }
+        }
+        public string Log
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(log))
+                    return log = Path.Combine(General, FileName_Prefix, FileName_Log, FileName_Suffix);
+                else return log;
+            }
+            set { log = value; }
+        }
+        public string SampleSetParameters
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(sampleSetParameters))
+                    return sampleSetParameters = Path.Combine(General, FileName_Prefix, FileName_SampleSetParameters, FileName_Suffix);
+                else return sampleSetParameters;
+            }
+            set { sampleSetParameters = value; }
+        }
+        public string SampleSet
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(sampleSet))
+                    return sampleSet = Path.Combine(General, FileName_Prefix, FileName_SampleSet, FileName_Suffix);
+                else return sampleSet;
+            }
+            set { sampleSet = value; }
+        }
+        public string InitializedNet
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(initializedNet))
+                    return initializedNet = Path.Combine(General, FileName_Prefix, FileName_InitializedNet, FileName_Suffix);
+                else return initializedNet;
+            }
+            set { initializedNet = value; }
+        }
+        public string TrainedNet
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(trainedNet))
+                    return trainedNet = Path.Combine(General, FileName_Prefix, FileName_TrainedNet, FileName_Suffix);
+                else return trainedNet;
+            }
+            set { trainedNet = value; }
+        }
 
         #endregion
 
         #region methods
 
-        public void SetGeneralPath(string path)
+        public bool SetGeneralPath(string path)
         {
+            if (!Directory.Exists(path))
+            {
+                _onInitializerStatusChanged("Path not found!");
+                return false;
+            }
+
             General = path;
             _onInitializerStatusChanged("General path is set.");
+            UseGeneralPathAndDefaultNames();    // no default names here?
+            return true;
         }
         public void SetFileNamePrefix(string prefix)
         {
@@ -55,6 +128,33 @@ namespace NeuralNetBuilder.Builders
             FileName_Suffix = suffix;
             _onInitializerStatusChanged($"The file name has suffix {suffix} now.");
         }
+        public void ResetPaths()
+        {
+            General = Path.GetTempPath();
+
+            netParameters = string.Empty;
+            trainerParameters = string.Empty;
+            log = string.Empty;
+            sampleSetParameters = string.Empty;
+            sampleSet = string.Empty;
+            initializedNet = string.Empty;
+            trainedNet = string.Empty;
+
+            _onInitializerStatusChanged($"Path for all files has been reset.");
+        }
+        public void UseGeneralPathAndDefaultNames()
+        {
+            SetNetParametersPath(Path.Combine(General, FileName_Prefix, FileName_NetParameters, FileName_Suffix));
+            SetTrainerParametersPath(Path.Combine(General, FileName_Prefix, FileName_TrainerParameters, FileName_Suffix));
+            SetLogPath(Path.Combine(General, FileName_Prefix, FileName_Log, FileName_Suffix));
+            SetSampleSetParametersPath(Path.Combine(General, FileName_Prefix, FileName_SampleSetParameters, FileName_Suffix));
+            SetSampleSetPath(Path.Combine(General, FileName_Prefix, FileName_SampleSet, FileName_Suffix));
+            SetInitializedNetPath(Path.Combine(General, FileName_Prefix, FileName_InitializedNet, FileName_Suffix));
+            SetTrainedNetPath(Path.Combine(General, FileName_Prefix, FileName_TrainedNet, FileName_Suffix));
+        }
+
+        #region redundant?
+
         public void SetInitializedNetPath(string path)
         {
             InitializedNet = path;
@@ -90,16 +190,8 @@ namespace NeuralNetBuilder.Builders
             Log = path;
             _onInitializerStatusChanged("Path to the log file has been set.");
         }
-        public void SetAllPaths()
-        {
-            SetNetParametersPath(@$"{General}{FileName_Prefix}{FileName_NetParameters}{FileName_Suffix}");
-            SetTrainerParametersPath(@$"{General}{FileName_Prefix}{FileName_TrainerParameters}{FileName_Suffix}");
-            SetLogPath(@$"{General}{FileName_Prefix}{FileName_Log}{FileName_Suffix}");
-            SetSampleSetParametersPath(@$"{General}{FileName_Prefix}{FileName_SampleSetParameters}{FileName_Suffix}");
-            SetSampleSetPath(@$"{General}{FileName_Prefix}{FileName_SampleSet}{FileName_Suffix}");
-            SetInitializedNetPath(@$"{General}{FileName_Prefix}{FileName_InitializedNet}{FileName_Suffix}");
-            SetTrainedNetPath(@$"{General}{FileName_Prefix}{FileName_TrainedNet}{FileName_Suffix}");
-        }
+
+        #endregion
 
         #endregion
     }

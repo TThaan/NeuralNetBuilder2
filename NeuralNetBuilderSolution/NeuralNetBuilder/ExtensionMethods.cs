@@ -7,12 +7,12 @@ namespace NeuralNetBuilder
 {
     public static class ExtensionMethods
     {
-        internal static string ToCollectionString<T>(this IEnumerable<T> collection)
+        public static string ToStringFromCollection<T>(this IEnumerable<T> collection)
         {
-            return string.Join(",", collection.Select(x => x.ToString()));
+            return string.Join(", ", collection.Select(x => x.ToString()));
         }
         // Implement multiple dimensions:
-        internal static List<T> ToList<T>(this Array arr)
+        public static List<T> ToList<T>(this Array arr)
         {
             var result = new List<T>();
 
@@ -23,7 +23,7 @@ namespace NeuralNetBuilder
 
             return result;
         }
-        internal static async Task<IEnumerable<T>> ShuffleAsync<T>(this IEnumerable<T> collection)
+        public static async Task<IEnumerable<T>> ShuffleAsync<T>(this IEnumerable<T> collection)
         {
             return await Task.Run(() =>
             {

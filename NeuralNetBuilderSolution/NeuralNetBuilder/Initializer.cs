@@ -23,8 +23,8 @@ namespace NeuralNetBuilder
 
         public Initializer()
         {
-            paths = new PathBuilder(OnInitializerStatusChanged);            // via DC?
-            parameters = new ParameterBuilder(OnInitializerStatusChanged);  // via DC?
+            paths = new PathBuilder(OnInitializerStatusChanged);                    // via DC?
+            parameters = new ParameterBuilder(paths, OnInitializerStatusChanged);   // via DC?
         }
 
         #endregion
@@ -175,56 +175,6 @@ namespace NeuralNetBuilder
                 }
                 catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
             });
-        }
-        public async Task<bool> LoadNetParametersAsync()
-        {
-            return await Task.Run(() =>
-            {
-                try
-                {
-                    OnInitializerStatusChanged("\nLoading net parameters from file, please wait...");
-                    var jasonParams = File.ReadAllText(Paths.NetParameters);
-                    var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
-                    Parameters.NetParameters = sp.NetParameters;
-                    OnInitializerStatusChanged("Successfully loaded net parameters.\n");
-                    return true;
-                }
-                catch (Exception e) { OnInitializerStatusChanged($"{e.Message}"); return false; }
-            });
-        }
-        public async Task<bool> LoadTrainerParametersAsync()
-        {
-            return await Task.Run(() =>
-            {
-                try
-                {
-                    OnInitializerStatusChanged("\nLoading trainer parameters from file, please wait...");
-                    var jasonParams = File.ReadAllText(Paths.TrainerParameters);
-                    var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
-                    Parameters.TrainerParameters = sp.TrainerParameters;
-                    OnInitializerStatusChanged("Successfully loaded trainer parameters.\n");
-                    return true;
-                }
-                catch (Exception e) { OnInitializerStatusChanged($"{e.Message}"); return false; }
-            });
-        }
-        public async Task<bool> LoadSampleSetParametersAsync()
-        {
-            if (Paths.SampleSetParameters == default)
-            {
-                OnInitializerStatusChanged("No path to sample set parameters is set.");
-                return false;
-            }
-
-            try
-            {
-                OnInitializerStatusChanged("\nLoading sample set parameters from file, please wait...");
-                var jsonString = await File.ReadAllTextAsync(Paths.SampleSetParameters);
-                Parameters.SampleSetParameters = JsonConvert.DeserializeObject<SampleSetParameters>(jsonString);
-                OnInitializerStatusChanged("Successfully loaded sample set parameters.\n");
-                return true;
-            }
-            catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
         }
         public async Task<bool> CreateSampleSetAsync()
         {
