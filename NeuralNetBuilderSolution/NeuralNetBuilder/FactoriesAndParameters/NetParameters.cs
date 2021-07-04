@@ -8,7 +8,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
 {
     public interface INetParameters : IParametersBase
     {
-        string FileName { get; set; }
+        string FileName { get; set; }   // redundant?
         ObservableCollection<ILayerParameters> LayerParametersCollection { get; set; }
         WeightInitType WeightInitType { get; set; }
     }

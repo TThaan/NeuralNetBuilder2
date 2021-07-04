@@ -22,7 +22,7 @@ namespace NeuralNetBuilder
         float LearningRate { get; set; }
         float LearningRateChange { get; }
         float LastEpochsAccuracy { get; set; }
-        float CurrentTotalCost { get; set; }
+        float CurrentTotalCost { get; set; }        
         TrainerStatus TrainerStatus { get; set; }
         public string Message { get; set; }
         Task Train(INet net, ISampleSet sampleSet, string logName);

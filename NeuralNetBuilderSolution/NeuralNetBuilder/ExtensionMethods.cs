@@ -11,6 +11,18 @@ namespace NeuralNetBuilder
         {
             return string.Join(",", collection.Select(x => x.ToString()));
         }
+        // Implement multiple dimensions:
+        internal static List<T> ToList<T>(this Array arr)
+        {
+            var result = new List<T>();
+
+            for (int i = 0; i < arr.Length; i++)
+            {
+                result.Add((T)arr.GetValue(i));
+            }
+
+            return result;
+        }
         internal static async Task<IEnumerable<T>> ShuffleAsync<T>(this IEnumerable<T> collection)
         {
             return await Task.Run(() =>

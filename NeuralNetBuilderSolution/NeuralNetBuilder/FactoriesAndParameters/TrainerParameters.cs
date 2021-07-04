@@ -8,6 +8,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
         float LearningRate { get; set; }
         float LearningRateChange { get; set; }
         CostType CostType { get; set; }
+        //bool IsLoggingActivated { get; set; }
     }
 
     [Serializable]
@@ -17,5 +18,6 @@ namespace NeuralNetBuilder.FactoriesAndParameters
         public float LearningRate { get; set; }
         public float LearningRateChange { get; set; }
         public CostType CostType { get; set; }
+        //public bool IsLoggingActivated { get; set; }
     }
 }

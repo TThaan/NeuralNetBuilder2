@@ -13,25 +13,83 @@ namespace NeuralNetBuilder
     // wa: global parameters? Or in NetParameters?
     public class Initializer
     {
-        #region ctor
+        #region fields & ctor
+
+        private PathBuilder paths;
+        private ParameterBuilder parameters;
+        private ISampleSet sampleSet;
+        private INet net, trainedNet;
+        private ITrainer trainer;
 
         public Initializer()
         {
-            Paths = new PathBuilder(OnInitializerStatusChanged);
-            Parameters = new ParameterBuilder(OnInitializerStatusChanged);
+            paths = new PathBuilder(OnInitializerStatusChanged);            // via DC?
+            parameters = new ParameterBuilder(OnInitializerStatusChanged);  // via DC?
         }
 
         #endregion
 
         #region properties
 
-        public PathBuilder Paths { get; }
-        public ParameterBuilder Parameters { get; }
+        public PathBuilder Paths
+        {
+            get
+            {
+                if (paths == null)
+                    OnInitializerStatusChanged("Paths are null");
+                return paths;
+            }
+        }
+        public ParameterBuilder Parameters
+        {
+            get
+            {
+                if (parameters == null)
+                    OnInitializerStatusChanged("Parameters are null");
+                return parameters;
+            }
+        }
 
-        public ISampleSet SampleSet { get; set; }
-        public INet Net { get; set; }
-        public INet TrainedNet { get; set; }
-        public ITrainer Trainer { get; set; }
+        public ISampleSet SampleSet
+        {
+            get
+            {
+                if (sampleSet == null)
+                    OnInitializerStatusChanged("SampleSet is null");
+                return sampleSet;
+            }
+            set { sampleSet = value; }
+        }
+        public INet Net
+        {
+            get
+            {
+                if (net == null)
+                    OnInitializerStatusChanged("Net is null");
+                return net;
+            }
+            set { net = value; }
+        }
+        public INet TrainedNet
+        {
+            get
+            {
+                if (trainedNet == null)
+                    OnInitializerStatusChanged("TrainedNet is null");
+                return trainedNet;
+            }
+            set { trainedNet = value; }
+        }
+        public ITrainer Trainer
+        {
+            get
+            {
+                if (trainer == null)
+                    OnInitializerStatusChanged("Trainer is null");
+                return trainer;
+            }
+            set { trainer = value; }
+        }
         public bool IsLogged { get; set; }
 
         #endregion

@@ -58,37 +58,37 @@ namespace NeuralNetBuilder.Builders
         public void SetInitializedNetPath(string path)
         {
             InitializedNet = path;
-            _onInitializerStatusChanged("Path to the initialized net is set.");
+            _onInitializerStatusChanged("Path to the initialized net has been set.");
         }
         public void SetTrainedNetPath(string path)
         {
             TrainedNet = path;
-            _onInitializerStatusChanged("Path to the trained net is set.");
+            _onInitializerStatusChanged("Path to the trained net has been set.");
         }
         public void SetSampleSetPath(string path)
         {
             SampleSet = path;
-            _onInitializerStatusChanged("Path to the sample set is set.");
+            _onInitializerStatusChanged("Path to the sample set has been set.");
         }
         public void SetNetParametersPath(string path)
         {
             NetParameters = path;
-            _onInitializerStatusChanged("Path to net parameters is set.");
+            _onInitializerStatusChanged("Path to net parameters has been set.");
         }
         public void SetTrainerParametersPath(string path)
         {
             TrainerParameters = path;
-            _onInitializerStatusChanged("Path to trainer parameters is set.");
+            _onInitializerStatusChanged("Path to trainer parameters has been set.");
         }
         public void SetSampleSetParametersPath(string path)
         {
             SampleSetParameters = path;
-            _onInitializerStatusChanged("Path to parameters for the sample set is set.");
+            _onInitializerStatusChanged("Path to parameters for the sample set has been set.");
         }
         public void SetLogPath(string path)
         {
             Log = path;
-            _onInitializerStatusChanged("Path to the log file is set.");
+            _onInitializerStatusChanged("Path to the log file has been set.");
         }
         public void SetAllPaths()
         {
