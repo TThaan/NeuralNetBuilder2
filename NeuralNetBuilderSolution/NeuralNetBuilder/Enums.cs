@@ -6,9 +6,9 @@
     }
     public enum ActivationType
     {
+        None,
         LeakyReLU, NullActivator,
-        ReLU, Sigmoid, SoftMax, SoftMaxWithCrossEntropyLoss, Tanh,
-        None
+        ReLU, Sigmoid, SoftMax, SoftMaxWithCrossEntropyLoss, Tanh
     }
     public enum CostType
     {
