@@ -86,22 +86,22 @@ namespace NeuralNetBuilder.Builders
         public Dictionary<string, string> ParameterNames { get; set; } = new Dictionary<string, string>
         {
             // NetParameters
-            [nameof(INetParameters.WeightInitType)] = "wInit", 
-            [nameof(SetWeightMin_Globally)] = "wMin global", 
-            [nameof(SetWeightMax_Globally)] = "wMax global", 
-            [nameof(SetBiasMin_Globally)] = "bMin global",
-            [nameof(SetBiasMax_Globally)] = "bMax global",
-            [nameof(AddNewLayerAfter)] = "layer add",
-            [nameof(DeleteLayer)] = "layer del",
-            [nameof(MoveLayerLeft)] = "layer left",
-            [nameof(MoveLayerRight)] = "layer right",
-            [nameof(SetNeuronsAtLayer)] = "layer neurons",
-            [nameof(SetActivationTypeAtLayer)] = "layer act",
-            [nameof(SetWeightMaxAtLayer)] = "layer wMax",
-            [nameof(SetWeightMinAtLayer)] = "layer wMin",
-            [nameof(SetBiasMaxAtLayer)] = "layer bMax",
-            [nameof(SetBiasMinAtLayer)] = "layer bMin",
-            [nameof(SetWeightInitType)] = "layer wInit"
+            [nameof(INetParameters.WeightInitType)] = "wInit",
+            // [nameof(SetWeightInitType)] = "wInit",  // This or the latter redundant?
+            // [nameof(SetWeightMin_Globally)] = "wMin", 
+            // [nameof(SetWeightMax_Globally)] = "wMax", 
+            // [nameof(SetBiasMin_Globally)] = "bMin",
+            // [nameof(SetBiasMax_Globally)] = "bMax",
+            [nameof(SetWeightMaxAtLayer)] = "wMax",
+            [nameof(SetWeightMinAtLayer)] = "wMin",
+            [nameof(SetBiasMaxAtLayer)] = "bMax",
+            [nameof(SetBiasMinAtLayer)] = "bMin",
+            [nameof(AddNewLayerAfter)] = "add",
+            [nameof(DeleteLayer)] = "del",
+            [nameof(MoveLayerLeft)] = "left",
+            [nameof(MoveLayerRight)] = "right",
+            [nameof(SetNeuronsAtLayer)] = "neurons",
+            [nameof(SetActivationTypeAtLayer)] = "act"
         };
 
         public IEnumerable<CostType> CostTypes => costTypes ??
@@ -113,12 +113,31 @@ namespace NeuralNetBuilder.Builders
 
         #endregion
 
-        #region methods: Change NetParameters
-
-        public void ChangeANetParameter(string parameterName, string parameterValue)
+        public void ChangeParameter(string parameterName, string parameterValue, string id)
         {
             try
             {
+                // Sample set parameters
+                switch (parameterName)
+                {
+                    case nameof(SampleSetParameters.Name):
+                        SetSampleSetName(parameterValue.ToEnum<SetName>());
+                        break;
+                    case nameof(SampleSetParameters.TestingSamples):
+                        SetAmountOfTestingSamples(int.Parse(parameterValue));
+                        break;
+                    case nameof(SampleSetParameters.TrainingSamples):
+                        SetAmountOfTrainingSamples(int.Parse(parameterValue));
+                        break;
+                    case nameof(SampleSetParameters.InputDistortion):
+                        SetInputDistortion(int.Parse(parameterValue));
+                        break;
+                    case nameof(SampleSetParameters.TargetTolerance):
+                        SetTargetTolerance(float.Parse(parameterValue));
+                        break;
+                }
+
+                // Net parameters
                 switch (parameterName)
                 {
                     case nameof(NetParameters.WeightInitType):
@@ -137,46 +156,56 @@ namespace NeuralNetBuilder.Builders
                         SetBiasMax_Globally(float.Parse(parameterValue));
                         break;
                 }
-            }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); }
 
-            //PropertyInfo pi = NetParameters.GetType().GetProperty(parameterName);
-            //pi.SetValue(NetParameters, parameterValue);
-        }
-        public void ChangeALayerParameter(string id, string parameterName, string parameterValue)
-        {
-            try
-            {
+                // Trainer Parameters
+                switch (parameterName)
+                {
+                    case nameof(TrainerParameters.LearningRate):
+                        SetLearningRate(float.Parse(parameterValue));
+                        break;
+                    case nameof(TrainerParameters.LearningRateChange):
+                        SetLearningRateChange(float.Parse(parameterValue));
+                        break;
+                    case nameof(TrainerParameters.CostType):
+                        SetCostType(parameterValue.ToEnum<CostType>());
+                        break;
+                    case nameof(TrainerParameters.Epochs):
+                        SetInputDistortion(int.Parse(parameterValue));
+                        break;
+                }
+
+                // Layer Parameters
                 int.TryParse(id, out int layerId);
 
                 if (parameterName == ParameterNames[nameof(AddNewLayerAfter)])
                     AddNewLayerAfter(layerId);
-                if (parameterName == ParameterNames[nameof(DeleteLayer)])
+                else if (parameterName == ParameterNames[nameof(DeleteLayer)])
                     DeleteLayer(layerId);
-                if (parameterName == ParameterNames[nameof(MoveLayerLeft)])
+                else if (parameterName == ParameterNames[nameof(MoveLayerLeft)])
                     MoveLayerLeft(layerId);
-                if (parameterName == ParameterNames[nameof(MoveLayerRight)])
+                else if (parameterName == ParameterNames[nameof(MoveLayerRight)])
                     MoveLayerRight(layerId);
 
-                if (parameterName == ParameterNames[nameof(SetNeuronsAtLayer)])
+                else if (parameterName == ParameterNames[nameof(SetNeuronsAtLayer)])
                     SetNeuronsAtLayer(layerId, int.Parse(parameterValue));
-                if (parameterName == ParameterNames[nameof(SetActivationTypeAtLayer)])
+                else if (parameterName == ParameterNames[nameof(SetActivationTypeAtLayer)])
                     SetActivationTypeAtLayer(layerId, parameterValue.ToEnum<ActivationType>());
-                if (parameterName == ParameterNames[nameof(SetWeightMaxAtLayer)])
+                else if (parameterName == ParameterNames[nameof(SetWeightMaxAtLayer)])
                     SetWeightMaxAtLayer(layerId, float.Parse(parameterValue));
-                if (parameterName == ParameterNames[nameof(SetWeightMinAtLayer)])
+                else if (parameterName == ParameterNames[nameof(SetWeightMinAtLayer)])
                     SetWeightMinAtLayer(layerId, float.Parse(parameterValue));
-                if (parameterName == ParameterNames[nameof(SetBiasMaxAtLayer)])
+                else if (parameterName == ParameterNames[nameof(SetBiasMaxAtLayer)])
                     SetBiasMaxAtLayer(layerId, float.Parse(parameterValue));
-                if (parameterName == ParameterNames[nameof(SetBiasMinAtLayer)])
+                else if (parameterName == ParameterNames[nameof(SetBiasMinAtLayer)])
                     SetBiasMinAtLayer(layerId, float.Parse(parameterValue));
-
             }
             catch (Exception e) { _onInitializerStatusChanged(e.Message); }
 
             //PropertyInfo pi = NetParameters.GetType().GetProperty(parameterName);
             //pi.SetValue(NetParameters, parameterValue);
         }
+
+        #region methods: Change NetParameters
 
         public bool SetWeightInitType(WeightInitType weightInitType)
         {
@@ -253,7 +282,7 @@ namespace NeuralNetBuilder.Builders
             }
             catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
 
-            _onInitializerStatusChanged($"New layer added. (Id = {precedingLayerIndex + 1}.");
+            _onInitializerStatusChanged($"New layer added. (Id = {precedingLayerIndex + 1}).");
             return true;
         }
         public bool DeleteLayer(int layerId)
@@ -271,7 +300,7 @@ namespace NeuralNetBuilder.Builders
             }
             catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
             
-            _onInitializerStatusChanged($"Layer deleted. (Id = {layerId}.");
+            _onInitializerStatusChanged($"Layer deleted. (Id = {layerId}).");
             return true;
         }
         public bool MoveLayerLeft(int layerId)
@@ -284,7 +313,7 @@ namespace NeuralNetBuilder.Builders
             }
             catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
 
-            _onInitializerStatusChanged($"Layer moved left. (OldId = {layerId}.");
+            _onInitializerStatusChanged($"Layer moved left. (OldId = {layerId}).");
             return true;
         }
         public bool MoveLayerRight(int layerId)
@@ -297,7 +326,7 @@ namespace NeuralNetBuilder.Builders
             }
             catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
 
-            _onInitializerStatusChanged($"Layer moved right. (OldId = {layerId}.");
+            _onInitializerStatusChanged($"Layer moved right. (OldId = {layerId}).");
             return true;
         }
 
@@ -371,32 +400,6 @@ namespace NeuralNetBuilder.Builders
         #endregion
 
         #region methods: Change SampleSetParameters
-
-        public void ChangeASampleSetParameter(string parameterName, string parameterValue)
-        {
-            try
-            {
-                switch (parameterName)
-                {
-                    case nameof(SampleSetParameters.Name):
-                        SetSampleSetName(parameterValue.ToEnum<SetName>());
-                        break;
-                    case nameof(SampleSetParameters.TestingSamples):
-                        SetAmountOfTestingSamples(int.Parse(parameterValue));
-                        break;
-                    case nameof(SampleSetParameters.TrainingSamples):
-                        SetAmountOfTrainingSamples(int.Parse(parameterValue));
-                        break;
-                    case nameof(SampleSetParameters.InputDistortion):
-                        SetInputDistortion(int.Parse(parameterValue));
-                        break;
-                    case nameof(SampleSetParameters.TargetTolerance):
-                        SetTargetTolerance(float.Parse(parameterValue));
-                        break;
-                }
-            }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); }
-        }
 
         public bool SetSampleSetName(SetName name)
         {
@@ -484,29 +487,6 @@ namespace NeuralNetBuilder.Builders
 
         #region methods: Change SampleSetParameters
 
-        public void ChangeATrainerParameter(string parameterName, string parameterValue)
-        {
-            try
-            {
-                switch (parameterName)
-                {
-                    case nameof(TrainerParameters.LearningRate):
-                        SetLearningRate(float.Parse(parameterValue));
-                        break;
-                    case nameof(TrainerParameters.LearningRateChange):
-                        SetLearningRateChange(float.Parse(parameterValue));
-                        break;
-                    case nameof(TrainerParameters.CostType):
-                        SetCostType(parameterValue.ToEnum<CostType>());
-                        break;
-                    case nameof(TrainerParameters.Epochs):
-                        SetInputDistortion(int.Parse(parameterValue));
-                        break;
-                }
-            }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); }
-        }
-
         public bool SetCostType(CostType costType)
         {
             try
@@ -556,6 +536,16 @@ namespace NeuralNetBuilder.Builders
 
         #region methods: Create, Load & Save
 
+        public bool CreateAllParameters(string templateName = "FourPixelCamera")
+        {
+            if (CreateSampleSetParameters(templateName) == false)
+                return false;
+            
+            CreateNetParameters();
+            CreateTrainerParameters();
+
+            return true;
+        }
         public bool CreateSampleSetParameters(string templateName = "")
         {
             SetName name = SetName.Custom;
@@ -581,6 +571,8 @@ namespace NeuralNetBuilder.Builders
         public void CreateNetParameters()
         {
             NetParameters = new NetParameters();
+            NetParameters.LayerParametersCollection.Add(new LayerParameters() 
+            { Id = 0, NeuronsPerLayer = 4, WeightMin = -1, WeightMax = 1, ActivationType = ActivationType.NullActivator});
             _onInitializerStatusChanged("Net parameters created.");
         }
         public void CreateTrainerParameters()
@@ -589,6 +581,16 @@ namespace NeuralNetBuilder.Builders
             _onInitializerStatusChanged("Trainer parameters created.");
         }
 
+        public async Task<bool> LoadAllParametersAsync()
+        {
+            bool result = true;
+
+            if(await LoadSampleSetParametersAsync() == false) result = false;
+            if(await LoadNetParametersAsync() == false) result = false;
+            if (await LoadTrainerParametersAsync() == false) result = false;
+
+            return result;
+        }
         public async Task<bool> LoadSampleSetParametersAsync()
         {
             if (_paths.SampleSetParameters == default)
@@ -640,6 +642,16 @@ namespace NeuralNetBuilder.Builders
             });
         }
 
+        public async Task<bool> SaveAllParametersAsync()
+        {
+            bool result = true;
+
+            if (await SaveSampleSetParametersAsync() == false) result = false;
+            if (await SaveNetParametersAsync() == false) result = false;
+            if (await SaveTrainerParametersAsync() == false) result = false;
+
+            return result;
+        }
         public async Task<bool> SaveSampleSetParametersAsync()
         {
             try
