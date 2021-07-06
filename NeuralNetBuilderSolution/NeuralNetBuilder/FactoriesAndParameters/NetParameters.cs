@@ -1,14 +1,13 @@
 ﻿using NeuralNetBuilder.FactoriesAndParameters.JsonConverters;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.ObjectModel;
-using System.IO;
 
 namespace NeuralNetBuilder.FactoriesAndParameters
 {
     public interface INetParameters : IParametersBase
     {
-        string FileName { get; set; }   // redundant?
         ObservableCollection<ILayerParameters> LayerParametersCollection { get; set; }
         WeightInitType WeightInitType { get; set; }
     }
@@ -16,9 +15,9 @@ namespace NeuralNetBuilder.FactoriesAndParameters
     [Serializable]
     public class NetParameters : ParametersBase, INetParameters
     {
-        public string FileName { get; set; } = Path.GetTempFileName();   // redundant?
         [JsonProperty(ItemConverterType = typeof(GenericJsonConverter<LayerParameters>))]
         public ObservableCollection<ILayerParameters> LayerParametersCollection { get; set; } = new ObservableCollection<ILayerParameters>();
+        [JsonConverter(typeof(StringEnumConverter))]
         public WeightInitType WeightInitType { get; set; } = WeightInitType.None;
     }
 }

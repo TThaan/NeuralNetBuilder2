@@ -1,5 +1,4 @@
 ﻿using MatrixExtensions;
-using NeuralNetBuilder.FactoriesAndParameters.JsonConverters;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;

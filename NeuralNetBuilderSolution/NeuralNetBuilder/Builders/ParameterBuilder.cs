@@ -13,13 +13,13 @@ namespace NeuralNetBuilder.Builders
     {
         #region fields & ctor
 
-        private IEnumerable<ActivationType> activationTypes;
-        private IEnumerable<CostType> costTypes;
-        private IEnumerable<WeightInitType> weightInitTypes;
         private readonly PathBuilder _paths;
         private readonly Action<string> _onInitializerStatusChanged;
 
-        private ISampleSetParameters sampleSetParameters;
+        private IEnumerable<ActivationType> activationTypes;
+        private IEnumerable<CostType> costTypes;
+        private IEnumerable<WeightInitType> weightInitTypes;
+
         private INetParameters netParameters;
         private ITrainerParameters trainerParameters;
 
@@ -33,20 +33,6 @@ namespace NeuralNetBuilder.Builders
 
         #region properties
 
-        public IEnumerable<SetName> SampleSetTemplates => new SampleSetSteward().DefaultSampleSetParameters.Keys;
-        public ISampleSetParameters SampleSetParameters
-        {
-            get
-            {
-                if (sampleSetParameters == null)
-                    _onInitializerStatusChanged("SampleSetParameters are null");
-                return sampleSetParameters;
-            }
-            set
-            {
-                sampleSetParameters = value;
-            }
-        }
         public INetParameters NetParameters
         {
             get
@@ -113,30 +99,12 @@ namespace NeuralNetBuilder.Builders
 
         #endregion
 
+        #region methods
+
         public void ChangeParameter(string parameterName, string parameterValue, string id)
         {
             try
             {
-                // Sample set parameters
-                switch (parameterName)
-                {
-                    case nameof(SampleSetParameters.Name):
-                        SetSampleSetName(parameterValue.ToEnum<SetName>());
-                        break;
-                    case nameof(SampleSetParameters.TestingSamples):
-                        SetAmountOfTestingSamples(int.Parse(parameterValue));
-                        break;
-                    case nameof(SampleSetParameters.TrainingSamples):
-                        SetAmountOfTrainingSamples(int.Parse(parameterValue));
-                        break;
-                    case nameof(SampleSetParameters.InputDistortion):
-                        SetInputDistortion(int.Parse(parameterValue));
-                        break;
-                    case nameof(SampleSetParameters.TargetTolerance):
-                        SetTargetTolerance(float.Parse(parameterValue));
-                        break;
-                }
-
                 // Net parameters
                 switch (parameterName)
                 {
@@ -170,7 +138,7 @@ namespace NeuralNetBuilder.Builders
                         SetCostType(parameterValue.ToEnum<CostType>());
                         break;
                     case nameof(TrainerParameters.Epochs):
-                        SetInputDistortion(int.Parse(parameterValue));
+                        SetEpochs(int.Parse(parameterValue));
                         break;
                 }
 
@@ -399,93 +367,7 @@ namespace NeuralNetBuilder.Builders
 
         #endregion
 
-        #region methods: Change SampleSetParameters
-
-        public bool SetSampleSetName(SetName name)
-        {
-            try
-            {
-                SampleSetParameters.Name = name;
-            }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"{SampleSetParameters}.{SampleSetParameters.Name} has been set to {SampleSetParameters.Name}.");
-            return true;
-        }
-        public bool SetAmountOfTestingSamples(int testingSamples)
-        {
-            try
-            {
-                SampleSetParameters.TestingSamples = testingSamples;
-            }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"{SampleSetParameters}.{SampleSetParameters.TestingSamples} has been set to {SampleSetParameters.TestingSamples}.");
-            return true;
-        }
-        public bool SetAmountOfTrainingSamples(int trainingSamples)
-        {
-            try
-            {
-                SampleSetParameters.TrainingSamples = trainingSamples;
-            }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"{SampleSetParameters}.{SampleSetParameters.TrainingSamples} has been set to {SampleSetParameters.TrainingSamples}.");
-            return true;
-        }
-        public bool SetInputDistortion(int targetTolerance)
-        {
-            try
-            {
-                SampleSetParameters.InputDistortion = targetTolerance;
-            }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"{SampleSetParameters}.{SampleSetParameters.InputDistortion} of samples has been set to {SampleSetParameters.InputDistortion}.");
-            return true;
-        }
-        public bool SetTargetTolerance(float targetTolerance)
-        {
-            try
-            {
-                SampleSetParameters.TargetTolerance = targetTolerance;
-            }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"{SampleSetParameters}.{SampleSetParameters.TargetTolerance} of samples has been set to {SampleSetParameters.TargetTolerance}.");
-            return true;
-        }
-        public bool UseAllAvailableTestingSamples()
-        {
-            try
-            {
-                SampleSetParameters.TestingSamples = SampleSetParameters.AllTestingSamples;
-            }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"{SampleSetParameters}.{SampleSetParameters.TestingSamples} has been set to {SampleSetParameters.AllTestingSamples}.");
-            return true;
-        }
-        public bool UseAllAvailableTrainingSamples()
-        {
-            try
-            {
-                SampleSetParameters.TestingSamples = SampleSetParameters.AllTestingSamples;
-            }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"{SampleSetParameters}.{SampleSetParameters.TestingSamples} has been set to {SampleSetParameters.AllTrainingSamples}.");
-            return true;
-        }
-        public bool SetSamplePaths()
-        {
-            throw new NotImplementedException();
-        }
-
-        #endregion
-
-        #region methods: Change SampleSetParameters
+        #region methods: Change TrainerParameters
 
         public bool SetCostType(CostType costType)
         {
@@ -536,38 +418,6 @@ namespace NeuralNetBuilder.Builders
 
         #region methods: Create, Load & Save
 
-        public bool CreateAllParameters(string templateName = "FourPixelCamera")
-        {
-            if (CreateSampleSetParameters(templateName) == false)
-                return false;
-            
-            CreateNetParameters();
-            CreateTrainerParameters();
-
-            return true;
-        }
-        public bool CreateSampleSetParameters(string templateName = "")
-        {
-            SetName name = SetName.Custom;
-            switch (templateName)
-            {
-                case "FourPixelCamera":
-                    name = SetName.FourPixelCamera;
-                    break;
-                case "MNIST":
-                    name = SetName.MNIST;
-                    break;
-            }
-            if (name == SetName.Custom)
-            {
-                _onInitializerStatusChanged($"Template name {templateName} is unavailable.");
-                return false;
-            }
-
-            SampleSetParameters = new SampleSetParameters { Name = name };
-            _onInitializerStatusChanged("Sample set parameters created.");
-            return true;
-        }
         public void CreateNetParameters()
         {
             NetParameters = new NetParameters();
@@ -581,45 +431,17 @@ namespace NeuralNetBuilder.Builders
             _onInitializerStatusChanged("Trainer parameters created.");
         }
 
-        public async Task<bool> LoadAllParametersAsync()
-        {
-            bool result = true;
-
-            if(await LoadSampleSetParametersAsync() == false) result = false;
-            if(await LoadNetParametersAsync() == false) result = false;
-            if (await LoadTrainerParametersAsync() == false) result = false;
-
-            return result;
-        }
-        public async Task<bool> LoadSampleSetParametersAsync()
-        {
-            if (_paths.SampleSetParameters == default)
-            {
-                _onInitializerStatusChanged("No path to sample set parameters is set.");
-                return false;
-            }
-
-            try
-            {
-                _onInitializerStatusChanged("\nLoading sample set parameters from file, please wait...");
-                var jsonString = await File.ReadAllTextAsync(_paths.SampleSetParameters);
-                SampleSetParameters = JsonConvert.DeserializeObject<SampleSetParameters>(jsonString);
-                _onInitializerStatusChanged("Successfully loaded sample set parameters.\n");
-                return true;
-            }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-        }
         public async Task<bool> LoadNetParametersAsync()
         {
             return await Task.Run(() =>
             {
                 try
                 {
-                    _onInitializerStatusChanged("\nLoading net parameters from file, please wait...");
+                    _onInitializerStatusChanged("Loading net parameters from file, please wait...");
                     var jasonParams = File.ReadAllText(_paths.NetParameters);
                     var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
                     NetParameters = sp.NetParameters;
-                    _onInitializerStatusChanged("Successfully loaded net parameters.\n");
+                    _onInitializerStatusChanged("Successfully loaded net parameters.");
                     return true;
                 }
                 catch (Exception e) { _onInitializerStatusChanged($"{e.Message}"); return false; }
@@ -631,47 +453,27 @@ namespace NeuralNetBuilder.Builders
             {
                 try
                 {
-                    _onInitializerStatusChanged("\nLoading trainer parameters from file, please wait...");
+                    _onInitializerStatusChanged("Loading trainer parameters from file, please wait...");
                     var jasonParams = File.ReadAllText(_paths.TrainerParameters);
                     var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
                     TrainerParameters = sp.TrainerParameters;
-                    _onInitializerStatusChanged("Successfully loaded trainer parameters.\n");
+                    _onInitializerStatusChanged("Successfully loaded trainer parameters.");
                     return true;
                 }
                 catch (Exception e) { _onInitializerStatusChanged($"{e.Message}"); return false; }
             });
         }
 
-        public async Task<bool> SaveAllParametersAsync()
-        {
-            bool result = true;
-
-            if (await SaveSampleSetParametersAsync() == false) result = false;
-            if (await SaveNetParametersAsync() == false) result = false;
-            if (await SaveTrainerParametersAsync() == false) result = false;
-
-            return result;
-        }
-        public async Task<bool> SaveSampleSetParametersAsync()
-        {
-            try
-            {
-                _onInitializerStatusChanged("\nSaving sample set parameters, please wait...");
-                var jsonString = JsonConvert.SerializeObject(SampleSetParameters, Formatting.Indented);
-                await File.WriteAllTextAsync(_paths.SampleSetParameters, jsonString);
-                _onInitializerStatusChanged("Successfully saved sample set parameters.\n");
-                return true;
-            }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-        }
         public async Task<bool> SaveNetParametersAsync()
         {
             try
             {
-                _onInitializerStatusChanged("\nSaving net parameters, please wait...");
+                _onInitializerStatusChanged("Saving net parameters, please wait...");
+
                 var jsonString = JsonConvert.SerializeObject(NetParameters, Formatting.Indented);
-                await File.WriteAllTextAsync(_paths.NetParameters, jsonString);
-                _onInitializerStatusChanged("Successfully saved net parameters.\n");
+                await File.AppendAllTextAsync(_paths.NetParameters, jsonString);
+
+                _onInitializerStatusChanged("Successfully saved net parameters.");
                 return true;
             }
             catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
@@ -680,14 +482,18 @@ namespace NeuralNetBuilder.Builders
         {
             try
             {
-                _onInitializerStatusChanged("\nSaving trainer parameters, please wait...");
+                _onInitializerStatusChanged("Saving trainer parameters, please wait...");
+
                 var jsonString = JsonConvert.SerializeObject(TrainerParameters, Formatting.Indented);
-                await File.WriteAllTextAsync(_paths.TrainerParameters, jsonString);
-                _onInitializerStatusChanged("Successfully saved trainer parameters.\n");
+                await File.AppendAllTextAsync(_paths.TrainerParameters, jsonString);
+
+                _onInitializerStatusChanged("Successfully saved trainer parameters.");
                 return true;
             }
             catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
         }
+
+        #endregion
 
         #endregion
 
