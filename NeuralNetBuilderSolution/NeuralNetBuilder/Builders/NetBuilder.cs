@@ -21,7 +21,7 @@ namespace NeuralNetBuilder.Builders
 
         #region properties
 
-        public ISampleSetParameters SampleSetParameters { get; set; }
+        //public ISampleSetParameters SampleSetParameters { get; set; }
         public INetParameters NetParameters { get; set; }
         public ITrainerParameters TrainerParameters { get; set; }
 

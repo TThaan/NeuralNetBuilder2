@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using MatrixExtensions;
 using NeuralNetBuilder.FactoriesAndParameters;
+using Microsoft.ML;
 
 namespace NeuralNetBuilder
 {
@@ -220,7 +221,7 @@ namespace NeuralNetBuilder
 
             LearningNet = NetFactory.GetLearningNet(net, _parameters.CostType); // CostType as Trainer prop?
 
-            SamplesTotal = sampleSet.TrainingSamples.Length;
+            SamplesTotal = sampleSet.TrainSet.Length;
             TrainerStatus = TrainerStatus.Running;
             Message = "Training";
 
@@ -232,8 +233,11 @@ namespace NeuralNetBuilder
                 {
                     for (currentSample = CurrentSample; currentSample < samplesTotal; CurrentSample++)
                     {
-                        await learningNet.FeedForwardAsync(sampleSet.TrainingSamples[currentSample].Input);
-                        await learningNet.PropagateBackAsync(sampleSet.TrainingSamples[currentSample].ExpectedOutput);
+                        await learningNet.FeedForwardAsync(sampleSet.TrainSet[currentSample].Features);
+
+                        // Use ML Net to map keys/Labels to values?!
+                        // await learningNet.PropagateBackAsync(sampleSet.TrainSet[currentSample].Target);
+
                         CurrentTotalCost = learningNet.CurrentTotalCost;
                         await learningNet.AdjustWeightsAndBiasesAsync(LearningRate);
 
@@ -256,16 +260,16 @@ namespace NeuralNetBuilder
             TrainerStatus = TrainerStatus.Finished;
             Message = "Training Finished";
         }
-        public async Task TestAsync(Sample[] testingSamples, ILogger logger)
+        public async Task TestAsync(Sample[] testSet, ILogger logger)
         {
             await Task.Run(async () =>
             {
                 int correct = 0, wrong = 0;
 
-                for (int i = 0;  i < testingSamples.Length; i++)
+                for (int i = 0;  i < testSet.Length; i++)
                 {
-                    await LearningNet.FeedForwardAsync(testingSamples[i].Input);
-                    bool isOutputCorrect = testingSamples[i].IsOutputApproximatelyCorrect(learningNet.Output);
+                    await LearningNet.FeedForwardAsync(testSet[i].Features);
+                    bool isOutputCorrect = TestSingleSample(testSet[i], i);
                     LastEpochsAccuracy = isOutputCorrect
                     ? (float)++correct / (correct + wrong)
                     : (float)correct / (correct + ++wrong);
@@ -274,6 +278,12 @@ namespace NeuralNetBuilder
                 }
             });
         }
+        private bool TestSingleSample(Sample testingSamples, int i)
+        {
+            // return testingSamples[i].IsOutputApproximatelyCorrect(learningNet.Output);
+            throw new NotImplementedException();
+        }
+
         public async Task Reset()
         {
             await Task.Run(() =>
@@ -304,9 +314,9 @@ namespace NeuralNetBuilder
             if (currentSample == 1000)
             {
                 LearningRate *= LearningRateChange;
-                await TestAsync(_sampleSet.TestingSamples, logger);
+                await TestAsync(_sampleSet.TestSet, logger);
                 currentSample = 0;
-                await _sampleSet.TrainingSamples.ShuffleAsync();
+                await _sampleSet.TrainSet.ShuffleAsync();
             }
         }
 
@@ -344,12 +354,12 @@ namespace NeuralNetBuilder
                 logger?.Log("\n                        * * * T E S T I N G * * *\n\n");
             }
 
-            logger?.Log(_sampleSet.TestingSamples[sampleNr].Input.ToLog("Input"));
-            logger?.Log(_sampleSet.TestingSamples[sampleNr].ExpectedOutput.ToLog("ExpectedOutput"));
+            logger?.Log(_sampleSet.TestSet[sampleNr].Features.ToLog("Features"));
+            //logger?.Log(_sampleSet.TestSet[sampleNr].Target.ToLog("Target"));
             logger?.Log(learningNet.Output.ToLog(nameof(learningNet.Output)));
             logger?.Log($"\nTestResult: {(isOutputCorrect ? "Correct" : "Wrong")}\n\n");
 
-            if (sampleNr == _sampleSet.TestingSamples.Length - 1)
+            if (sampleNr == _sampleSet.TestSet.Length - 1)
             {
                 logger?.Log($"CurrentAccuracy: {(float)correct / (correct + wrong)})\n\n");
             }

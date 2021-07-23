@@ -17,7 +17,7 @@ namespace NeuralNetBuilder
 
         private PathBuilder paths;
         private ParameterBuilder parameterBuilder;
-        private ISampleSet sampleSet;
+        // private ISampleSet sampleSet;
         private INet net, trainedNet;
         private ITrainer trainer;
 
@@ -50,16 +50,16 @@ namespace NeuralNetBuilder
             }
         }
 
-        public ISampleSet SampleSet
-        {
-            get
-            {
-                if (sampleSet == null)
-                    OnInitializerStatusChanged("SampleSet is null");
-                return sampleSet;
-            }
-            set { sampleSet = value; }
-        }
+        //public ISampleSet SampleSet
+        //{
+        //    get
+        //    {
+        //        if (sampleSet == null)
+        //            OnInitializerStatusChanged("SampleSet is null");
+        //        return sampleSet;
+        //    }
+        //    set { sampleSet = value; }
+        //}
         public INet Net
         {
             get
@@ -96,7 +96,7 @@ namespace NeuralNetBuilder
 
         #region methods
 
-        public async Task<bool> TrainAsync()
+        public async Task<bool> TrainAsync(ISampleSet sampleSet)
         {
             if (Trainer == null)
             {
@@ -108,7 +108,7 @@ namespace NeuralNetBuilder
                 OnInitializerStatusChanged("\nYou need a net to start training!");
                 return false;
             }
-            if (SampleSet == null)
+            if (sampleSet == null)
             {
                 OnInitializerStatusChanged("\nYou need a sample set to start training!");
                 return false;
@@ -117,7 +117,7 @@ namespace NeuralNetBuilder
             try
             {
                 OnInitializerStatusChanged($"\n            Training, please wait...\n");
-                await Trainer.Train(Net, SampleSet, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
+                await Trainer.Train(Net, sampleSet, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
                 TrainedNet = Trainer.TrainedNet?.GetCopy();
                 OnInitializerStatusChanged($"\n            Finished training.\n");
                 return true;
@@ -144,7 +144,7 @@ namespace NeuralNetBuilder
                 catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
             });
         }
-        public async Task<bool> CreateTrainerAsync()
+        public async Task<bool> CreateTrainerAsync(ISampleSet sampleSet)
         {
             if (ParameterBuilder.TrainerParameters == null)
             {
@@ -158,7 +158,7 @@ namespace NeuralNetBuilder
                 OnInitializerStatusChanged("You need to create the net to create the trainer!");
                 return false;
             }
-            if (SampleSet == null)
+            if (sampleSet == null)
             {
                 OnInitializerStatusChanged("You need a sample set to create the trainer!");
                 return false;

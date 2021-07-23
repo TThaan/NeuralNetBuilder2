@@ -8,7 +8,7 @@ namespace NeuralNetBuilder.Builders
         #region fields & ctor
 
         private readonly Action<string> _onInitializerStatusChanged;
-        private string netParameters, trainerParameters, log, initializedNet, trainedNet;//, sampleSetParameters, sampleSet
+        private string netParameters, trainerParameters, log, initializedNet, sampleSet, trainedNet;//, sampleSetParameters
 
         public PathBuilder(Action<string> onInitializerStatusChanged)
         {
@@ -21,7 +21,7 @@ namespace NeuralNetBuilder.Builders
 
         public string FileName_InitializedNet { get; set; } = "InitializedNet";
         public string FileName_TrainedNet { get; set; } = "TrainedNet";
-        //public string FileName_SampleSet { get; set; } = "SampleSet";
+        public string FileName_SampleSet { get; set; } = "SampleSet";
         //public string FileName_SampleSetParameters { get; set; } = "SampleSetParameters";
         public string FileName_NetParameters { get; set; } = "NetParameters";
         public string FileName_TrainerParameters { get; set; } = "TrainerParameters";
@@ -70,16 +70,16 @@ namespace NeuralNetBuilder.Builders
             }
             set { log = value; }
         }
-        //public string SampleSet
-        //{
-        //    get
-        //    {
-        //        if (string.IsNullOrEmpty(sampleSet))
-        //            return sampleSet = Path.Combine(General, FileName_Prefix, FileName_SampleSet + FileName_Suffix);
-        //        else return sampleSet;
-        //    }
-        //    set { sampleSet = value; }
-        //}
+        public string SampleSet
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(sampleSet))
+                    return sampleSet = Path.Combine(General, FileName_Prefix, FileName_SampleSet + FileName_Suffix);
+                else return sampleSet;
+            }
+            set { sampleSet = value; }
+        }
         public string InitializedNet
         {
             get
@@ -161,11 +161,11 @@ namespace NeuralNetBuilder.Builders
             TrainedNet = path;
             _onInitializerStatusChanged("Path to the trained net has been set.");
         }
-        //public void SetSampleSetPath(string path)
-        //{
-        //    SampleSet = path;
-        //    _onInitializerStatusChanged("Path to the sample set has been set.");
-        //}
+        public void SetSampleSetPath(string path)
+        {
+            SampleSet = path;
+            _onInitializerStatusChanged("Path to the sample set has been set.");
+        }
         public void SetNetParametersPath(string path)
         {
             NetParameters = path;
