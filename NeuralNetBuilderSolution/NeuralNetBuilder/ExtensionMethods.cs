@@ -12,7 +12,7 @@ namespace NeuralNetBuilder
             return string.Join(", ", collection.Select(x => x.ToString()));
         }
         /// <summary>
-        /// Supports following enums: ActivationType, WeightInitType, CostType
+        /// Supports following enums: ActivationType, WeightInitType, CostType, ParameterName
         /// Other types will cause an exception throw.
         /// </summary>
         public static TEnum ToEnum<TEnum>(this string enumAsString, bool throwExceptionOnWrongParameter = true)
@@ -21,26 +21,25 @@ namespace NeuralNetBuilder
 
             // Do I really need to restrict enum types?
             Type enumType = typeof(TEnum);
-            if (
-                enumType != typeof(ActivationType) ||
-                enumType != typeof(CostType) ||
-                enumType != typeof(WeightInitType))
-                throw new ArgumentException($"ToEnum(..) does not support type {enumType.Name}. \nSo far it only supports the following enums: ActivationType, WeightInitType, CostType");
+            //if (
+            //    enumType != typeof(ActivationType) &&
+            //    enumType != typeof(CostType) &&
+            //    enumType != typeof(WeightInitType) &&
+            //    enumType != typeof(ParameterName))
+            //    throw new ArgumentException($"ToEnum(..) does not support type {enumType.Name}. \nSo far it only supports the following enums: ActivationType, WeightInitType, CostType");
 
-            var names = Enum.GetNames(enumType);
+            //var names = Enum.GetNames(enumType);
             var values = Enum.GetValues(enumType);
-            int length = names.Length;
+            int length = values.Length;
 
             for (int i = 0; i < length; i++)
             {
-                if (names[i] == enumAsString)
-                    result = (TEnum)values.GetValue(i);
-
-                if (i == length - 1 && throwExceptionOnWrongParameter)
-                    throw new ArgumentException($"{enumType.Name}.{enumAsString} does not exist.");
+                result = (TEnum)values.GetValue(i);
+                if (result.ToString() == enumAsString)
+                    return result;
             }
-            
-            return result;
+
+            throw new ArgumentException($"{enumType.Name}.{enumAsString} does not exist.");
         }
         // Implement multiple dimensions:
         public static List<T> ToList<T>(this Array arr)

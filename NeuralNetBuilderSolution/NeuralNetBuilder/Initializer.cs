@@ -17,7 +17,7 @@ namespace NeuralNetBuilder
 
         private PathBuilder paths;
         private ParameterBuilder parameterBuilder;
-        // private ISampleSet sampleSet;
+        private ISampleSet sampleSet;
         private INet net, trainedNet;
         private ITrainer trainer;
 
@@ -49,17 +49,16 @@ namespace NeuralNetBuilder
                 return parameterBuilder;
             }
         }
-
-        //public ISampleSet SampleSet
-        //{
-        //    get
-        //    {
-        //        if (sampleSet == null)
-        //            OnInitializerStatusChanged("SampleSet is null");
-        //        return sampleSet;
-        //    }
-        //    set { sampleSet = value; }
-        //}
+        public ISampleSet SampleSet
+        {
+            get
+            {
+                if (sampleSet == null)
+                    OnInitializerStatusChanged("SampleSet is null");
+                return sampleSet;
+            }
+            set { sampleSet = value; }
+        }
         public INet Net
         {
             get
@@ -204,7 +203,7 @@ namespace NeuralNetBuilder
             }
             catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
         }
-        public async Task<bool> LoadInitializedNetAsync()
+        public async Task<bool> LoadNetAsync()
         {
             try
             {

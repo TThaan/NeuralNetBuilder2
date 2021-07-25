@@ -22,24 +22,13 @@ namespace NeuralNetBuilder.Builders
         public string FileName_InitializedNet { get; set; } = "InitializedNet";
         public string FileName_TrainedNet { get; set; } = "TrainedNet";
         public string FileName_SampleSet { get; set; } = "SampleSet";
-        //public string FileName_SampleSetParameters { get; set; } = "SampleSetParameters";
         public string FileName_NetParameters { get; set; } = "NetParameters";
         public string FileName_TrainerParameters { get; set; } = "TrainerParameters";
         public string FileName_Log { get; set; } = "Log";
         public string FileName_Prefix { get; set; } = string.Empty;
         public string FileName_Suffix { get; set; } = ".txt";
 
-        public string General { get; set; } = Path.GetTempPath();   // @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\";
-        //public string SampleSetParameters
-        //{
-        //    get
-        //    {
-        //        if (string.IsNullOrEmpty(sampleSetParameters))
-        //            return sampleSetParameters = Path.Combine(General, FileName_Prefix, FileName_SampleSetParameters + FileName_Suffix);
-        //        else return sampleSetParameters;
-        //    }
-        //    set { sampleSetParameters = value; }
-        //}
+        public string General { get; set; } = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\";    // Path.GetTempPath();
         public string NetParameters
         {
             get
@@ -130,7 +119,7 @@ namespace NeuralNetBuilder.Builders
         }
         public void ResetPaths()
         {
-            General = Path.GetTempPath();
+            General = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\";    // Path.GetTempPath();
 
             netParameters = string.Empty;
             trainerParameters = string.Empty;
@@ -176,11 +165,6 @@ namespace NeuralNetBuilder.Builders
             TrainerParameters = path;
             _onInitializerStatusChanged("Path to trainer parameters has been set.");
         }
-        //public void SetSampleSetParametersPath(string path)
-        //{
-        //    SampleSetParameters = path;
-        //    _onInitializerStatusChanged("Path to parameters for the sample set has been set.");
-        //}
         public void SetLogPath(string path)
         {
             Log = path;
