@@ -29,7 +29,7 @@
     public enum MainCommand
     {
         Undefined,
-        path, show, create, load, save, logon, logoff, train, test, p
+        path, show, create, load, save, logon, logoff, train, test, param, layer
     }
     public enum ShowCommand
     {
@@ -51,9 +51,13 @@
         Undefined,
         all, net, trainer, samples, par, netpar, trainerpar,
     }
-    public enum ChangeParameterCommand
+    public enum ParameterCommand
     {
-        Undefined, set, add
+        Undefined, set
+    }
+    public enum LayerCommand
+    {
+        Undefined, add, del, left, right
     }
     public enum InputHelper
     {
@@ -65,7 +69,7 @@
         // net parameters
         wInit,
         // layer parameters
-        act, wMax, wMin, bMax, bMin, del, left, right, N,
+        act, wMax, wMin, bMax, bMin, N,
         // trainer parameters
         cost, epochs, Eta, dEta,
     }

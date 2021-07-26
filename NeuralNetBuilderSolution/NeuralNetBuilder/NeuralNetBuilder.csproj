@@ -16,6 +16,9 @@
     <Reference Include="DeepLearningDataProvider">
       <HintPath>..\..\..\DeepLearningDataProvider\DeepLearningDataProviderSolution\DeepLearningDataProvider\bin\Debug\netcoreapp3.1\DeepLearningDataProvider.dll</HintPath>
     </Reference>
+    <Reference Include="ImpEx">
+      <HintPath>..\..\..\ImpEx\ImpEx.Solution\ImpEx\bin\Debug\netcoreapp3.1\ImpEx.dll</HintPath>
+    </Reference>
     <Reference Include="MatrixExtensions">
       <HintPath>..\..\..\MatrixExtensions\MatrixExtensions_Solution\MatrixExtensions\bin\Debug\netcoreapp3.1\MatrixExtensions.dll</HintPath>
     </Reference>

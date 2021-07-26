@@ -1,4 +1,5 @@
-﻿using NeuralNetBuilder.FactoriesAndParameters;
+﻿using ImpEx;
+using NeuralNetBuilder.FactoriesAndParameters;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -37,8 +38,8 @@ namespace NeuralNetBuilder.Builders
         {
             get
             {
-                if (netParameters == null)
-                    _onInitializerStatusChanged("NetParameters are null");
+                //if (netParameters == null)
+                //    _onInitializerStatusChanged("NetParameters are null");
                 return netParameters;
             }
             set
@@ -50,8 +51,8 @@ namespace NeuralNetBuilder.Builders
         {
             get
             {
-                if (trainerParameters == null)
-                    _onInitializerStatusChanged("TrainerParameters are null");
+                //if (trainerParameters == null)
+                //    _onInitializerStatusChanged("TrainerParameters are null");
                 return trainerParameters;
             }
             set
@@ -63,8 +64,8 @@ namespace NeuralNetBuilder.Builders
         {
             get
             {
-                if (NetParameters.LayerParametersCollection == null)
-                    _onInitializerStatusChanged("LayerParametersCollection is null");
+                //if (NetParameters.LayerParametersCollection == null)
+                //    _onInitializerStatusChanged("LayerParametersCollection is null");
                 return NetParameters.LayerParametersCollection;
             }
         }
@@ -134,18 +135,6 @@ namespace NeuralNetBuilder.Builders
                 
                 switch (name)
                 {
-                    case ParameterName.del:
-                        DeleteLayer(layerId);
-                        return;
-                    case ParameterName.left:
-                        MoveLayerLeft(layerId);
-                        return;
-                    case ParameterName.right:
-                        MoveLayerRight(layerId);
-                        return;
-                    case ParameterName.N:
-                        SetNeuronsAtLayer(layerId, int.Parse(value));
-                        return;
                     case ParameterName.act:
                         SetActivationTypeAtLayer(layerId, int.Parse(value));
                         return;
@@ -171,6 +160,22 @@ namespace NeuralNetBuilder.Builders
             //PropertyInfo pi = NetParameters.GetType().GetProperty(parameterName);
             //pi.SetValue(NetParameters, parameterValue);
         }
+        //public void ChangeLayer()
+        //{
+            
+        //            case ParameterName.del:
+        //                DeleteLayer(layerId);
+        //    return;
+        //            case ParameterName.left:
+        //                MoveLayerLeft(layerId);
+        //    return;
+        //            case ParameterName.right:
+        //                MoveLayerRight(layerId);
+        //    return;
+        //            case ParameterName.N:
+        //                SetNeuronsAtLayer(layerId, int.Parse(value));
+        //    return;
+        //}
 
         #region methods: Change NetParameters
 
@@ -312,7 +317,7 @@ namespace NeuralNetBuilder.Builders
             }
             catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
 
-            _onInitializerStatusChanged($"WeightMax of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.");
+            _onInitializerStatusChanged($"Activation type of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.");
             return true;
         }
         public bool SetWeightMaxAtLayer(int layerId, float weightMax)
@@ -428,37 +433,32 @@ namespace NeuralNetBuilder.Builders
 
         public async Task<bool> LoadNetParametersAsync()
         {
-            return await Task.Run(() =>
+            try
             {
-                try
-                {
-                    _onInitializerStatusChanged("Loading net parameters from file, please wait...");
+                _onInitializerStatusChanged("Loading net parameters from file, please wait...");
 
-                    // Use ImpEx:
-                    var jasonParams = File.ReadAllText(_paths.NetParameters);
-                    var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
-                    NetParameters = sp.NetParameters;
-                    _onInitializerStatusChanged("Successfully loaded net parameters.");
-                    return true;
-                }
-                catch (Exception e) { _onInitializerStatusChanged($"{e.Message}"); return false; }
-            });
+                // ar jasonParams = File.ReadAllText(_paths.NetParameters);
+                // ar sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
+
+                NetParameters = await Import.LoadAsJsonAsync<NetParameters>(_paths.NetParameters);
+                _onInitializerStatusChanged("Successfully loaded net parameters.");
+                return true;
+            }
+            catch (Exception e) { _onInitializerStatusChanged($"{e.Message}"); return false; }
         }
         public async Task<bool> LoadTrainerParametersAsync()
         {
-            return await Task.Run(() =>
+            try
             {
-                try
-                {
-                    _onInitializerStatusChanged("Loading trainer parameters from file, please wait...");
-                    var jasonParams = File.ReadAllText(_paths.TrainerParameters);
-                    var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
-                    TrainerParameters = sp.TrainerParameters;
-                    _onInitializerStatusChanged("Successfully loaded trainer parameters.");
-                    return true;
-                }
-                catch (Exception e) { _onInitializerStatusChanged($"{e.Message}"); return false; }
-            });
+                _onInitializerStatusChanged("Loading trainer parameters from file, please wait...");
+                // var jasonParams = File.ReadAllText(_paths.TrainerParameters);
+                // var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
+                    
+                TrainerParameters = await Import.LoadAsJsonAsync<TrainerParameters>(_paths.TrainerParameters);
+                _onInitializerStatusChanged("Successfully loaded trainer parameters.");
+                return true;
+            }
+            catch (Exception e) { _onInitializerStatusChanged($"{e.Message}"); return false; }
         }
 
         public async Task<bool> SaveNetParametersAsync()
@@ -467,9 +467,9 @@ namespace NeuralNetBuilder.Builders
             {
                 _onInitializerStatusChanged("Saving net parameters, please wait...");
 
-                var jsonString = JsonConvert.SerializeObject(NetParameters, Formatting.Indented);
-                await File.AppendAllTextAsync(_paths.NetParameters, jsonString);
-
+                //var jsonString = JsonConvert.SerializeObject(NetParameters, Formatting.Indented);
+                //await File.AppendAllTextAsync(_paths.NetParameters, jsonString);
+                await Export.SaveAsJsonAsync(NetParameters, _paths.NetParameters, true);
                 _onInitializerStatusChanged("Successfully saved net parameters.");
                 return true;
             }
