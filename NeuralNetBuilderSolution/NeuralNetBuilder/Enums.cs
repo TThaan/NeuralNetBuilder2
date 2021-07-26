@@ -26,16 +26,6 @@
     {
         Undefined, Initialized, Running, Paused, Finished   // Raw instead of Undefined?
     }
-    public enum ParameterName
-    {
-        Undefined, 
-        // net parameters
-        wInit, 
-        // layer parameters
-        act, wMax, wMin, bMax, bMin, del, left, right, N, 
-        // trainer parameters
-        cost, epochs, Eta, dEta,
-    }
     public enum MainCommand
     {
         Undefined,
@@ -64,5 +54,19 @@
     public enum ChangeParameterCommand
     {
         Undefined, set, add
+    }
+    public enum InputHelper
+    {
+        L, // layer
+    }
+    public enum ParameterName
+    {
+        Undefined,
+        // net parameters
+        wInit,
+        // layer parameters
+        act, wMax, wMin, bMax, bMin, del, left, right, N,
+        // trainer parameters
+        cost, epochs, Eta, dEta,
     }
 }

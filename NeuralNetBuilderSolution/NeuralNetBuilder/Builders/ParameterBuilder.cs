@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace NeuralNetBuilder.Builders
@@ -79,36 +80,37 @@ namespace NeuralNetBuilder.Builders
 
         #region methods
 
-        public void ChangeParameter(string parameterName, string parameterValue, int layerId)
+        public void ChangeParameter(string parameter, int layerId)
         {
-            ParameterName pName = parameterName.ToEnum<ParameterName>();
+            ParameterName name = parameter.Split(':').First().ToEnum<ParameterName>();
+            string value = parameter.Split(':').Last();
 
             try
             {
                 // Trainer Parameters
 
-                switch (pName)
+                switch (name)
                 {
                     case ParameterName.Eta:
-                        SetLearningRate(float.Parse(parameterValue));
+                        SetLearningRate(float.Parse(value));
                         return;
                     case ParameterName.dEta:
-                        SetLearningRateChange(float.Parse(parameterValue));
+                        SetLearningRateChange(float.Parse(value));
                         return;
                     case ParameterName.cost:
-                        SetCostType(int.Parse(parameterValue));
+                        SetCostType(int.Parse(value));
                         return;
                     case ParameterName.epochs:
-                        SetEpochs(int.Parse(parameterValue));
+                        SetEpochs(int.Parse(value));
                         return;
                 }
 
                 // Net parameters
 
-                switch (pName)
+                switch (name)
                 {
                     case ParameterName.wInit:
-                        SetWeightInitType(int.Parse(parameterValue));
+                        SetWeightInitType(int.Parse(value));
                         return;
                     // Or glob as layerId?
                     //case ParameterName.wMinGlob:
@@ -130,7 +132,7 @@ namespace NeuralNetBuilder.Builders
                 if (layerId < 0 || layerId > LayerParametersCollection.Count - 1)
                     throw new ArgumentException("Missing an existing layer id!");
                 
-                switch (pName)
+                switch (name)
                 {
                     case ParameterName.del:
                         DeleteLayer(layerId);
@@ -142,27 +144,27 @@ namespace NeuralNetBuilder.Builders
                         MoveLayerRight(layerId);
                         return;
                     case ParameterName.N:
-                        SetNeuronsAtLayer(layerId, int.Parse(parameterValue));
+                        SetNeuronsAtLayer(layerId, int.Parse(value));
                         return;
                     case ParameterName.act:
-                        SetActivationTypeAtLayer(layerId, int.Parse(parameterValue));
+                        SetActivationTypeAtLayer(layerId, int.Parse(value));
                         return;
                     case ParameterName.wMax:
-                        SetWeightMaxAtLayer(layerId, float.Parse(parameterValue));
+                        SetWeightMaxAtLayer(layerId, float.Parse(value));
                         return;
                     case ParameterName.wMin:
-                        SetWeightMinAtLayer(layerId, float.Parse(parameterValue));
+                        SetWeightMinAtLayer(layerId, float.Parse(value));
                         return;
                     case ParameterName.bMax:
-                        SetBiasMaxAtLayer(layerId, float.Parse(parameterValue));
+                        SetBiasMaxAtLayer(layerId, float.Parse(value));
                         return;
                     case ParameterName.bMin:
-                        SetBiasMinAtLayer(layerId, float.Parse(parameterValue));
+                        SetBiasMinAtLayer(layerId, float.Parse(value));
                         return;
                 };
                     
                 
-                throw new ArgumentException($"Parameter {parameterName} {(pName)} unknown.");
+                throw new ArgumentException($"Parameter {name} unknown.");
             }
             catch (Exception e) { _onInitializerStatusChanged(e.Message); }
 
