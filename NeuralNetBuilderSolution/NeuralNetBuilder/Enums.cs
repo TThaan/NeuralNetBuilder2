@@ -29,7 +29,9 @@
     public enum MainCommand
     {
         Undefined,
-        path, show, create, load, save, logon, logoff, train, test, param, layer
+        path, show, create, load, save, param, layer,
+        // stand alone - commands (no sub command, parameters etc needed):
+        logon, logoff, train, test
     }
     public enum ShowCommand
     {

@@ -19,14 +19,14 @@ namespace NeuralNetBuilder.Builders
 
         #region properties
 
-        public string FileName_InitializedNet { get; set; } = "InitializedNet";
-        public string FileName_TrainedNet { get; set; } = "TrainedNet";
-        public string FileName_SampleSet { get; set; } = "SampleSet";
-        public string FileName_NetParameters { get; set; } = "NetParameters";
-        public string FileName_TrainerParameters { get; set; } = "TrainerParameters";
-        public string FileName_Log { get; set; } = "Log";
+        public string FileName_InitializedNet { get; set; } = "InitializedNet.txt";
+        public string FileName_TrainedNet { get; set; } = "TrainedNet.txt";
+        public string FileName_SampleSet { get; set; } = "Samples.csv";
+        public string FileName_NetParameters { get; set; } = "NetParameters.txt";
+        public string FileName_TrainerParameters { get; set; } = "TrainerParameters.txt";
+        public string FileName_Log { get; set; } = "Log.txt";
         public string FileName_Prefix { get; set; } = string.Empty;
-        public string FileName_Suffix { get; set; } = ".txt";
+        public string FileName_Suffix { get; set; } = string.Empty;
 
         public string General { get; set; } = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\";    // Path.GetTempPath();
         public string NetParameters
