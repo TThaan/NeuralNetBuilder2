@@ -7,9 +7,25 @@ namespace NeuralNetBuilder
 {
     public static class ExtensionMethods
     {
-        public static string ToStringFromCollection<T>(this IEnumerable<T> collection)
+        /// <summary>
+        /// Cast a generic IEnumerable to a string. 
+        /// Optionally set a separator and a line break each or every n-th item (0 = no line break).
+        /// </summary>
+        public static string ToStringFromCollection<T>(this IEnumerable<T> collection, string separator = ", ", int lineBreakAfter = 0, int spacesInNewLine = 0)
         {
-            return string.Join(", ", collection.Select(x => x.ToString()));
+            List<object> collectionWithLineBreaks = Enumerable.Cast<object>(collection.ToList()).ToList();
+
+            if (lineBreakAfter > 0)
+            {
+                collectionWithLineBreaks = collection.Select((x, i) =>
+                {
+                    if (i != 0 && i % lineBreakAfter == 0)
+                        return $"\n{string.Join(string.Empty, Enumerable.Repeat(' ', spacesInNewLine))}" + (object)(x.ToString());
+                    else
+                        return (object)x.ToString();
+                }).ToList();
+            }
+            return string.Join(separator, collectionWithLineBreaks.Select(x => x.ToString()));
         }
         /// <summary>
         /// Supports following enums: ActivationType, WeightInitType, CostType, ParameterName
