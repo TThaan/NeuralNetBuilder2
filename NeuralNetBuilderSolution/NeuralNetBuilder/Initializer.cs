@@ -123,12 +123,35 @@ namespace NeuralNetBuilder
             }
             catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
         }
-        public async Task<bool> CreateNetAsync()
+        public async Task<bool> CreateNetAsync(string parameter)
         {
             if (ParameterBuilder.NetParameters == null)
             {
                 OnInitializerStatusChanged("You need net parameters to create the net!");
                 return false;
+            }
+
+            bool appendDefaultLabelsLayer = parameter == "true" ? true : parameter == "false" ? false : throw new ArgumentException("Parameter must be 'true' or 'false'.");
+            if (appendDefaultLabelsLayer)
+            {
+                if (SampleSet == null)
+                {
+                    OnInitializerStatusChanged("You need a sample set to append a default labels layer!");
+                    return false;
+                }
+
+                var labelsLayer = new LayerParameters
+                {
+                    Id = ParameterBuilder.NetParameters.LayerParametersCollection.Count,
+                    NeuronsPerLayer = SampleSet.Targets.Count,
+                    ActivationType = ActivationType.Tanh,
+                    WeightMin = -1, 
+                    WeightMax = 1,
+                    BiasMin = 0,
+                    BiasMax = 0,
+                };
+
+                ParameterBuilder.NetParameters.LayerParametersCollection.Add(labelsLayer);
             }
 
             return await Task.Run(() =>

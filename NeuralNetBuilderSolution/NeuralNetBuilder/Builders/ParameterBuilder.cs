@@ -160,22 +160,6 @@ namespace NeuralNetBuilder.Builders
             //PropertyInfo pi = NetParameters.GetType().GetProperty(parameterName);
             //pi.SetValue(NetParameters, parameterValue);
         }
-        //public void ChangeLayer()
-        //{
-            
-        //            case ParameterName.del:
-        //                DeleteLayer(layerId);
-        //    return;
-        //            case ParameterName.left:
-        //                MoveLayerLeft(layerId);
-        //    return;
-        //            case ParameterName.right:
-        //                MoveLayerRight(layerId);
-        //    return;
-        //            case ParameterName.N:
-        //                SetNeuronsAtLayer(layerId, int.Parse(value));
-        //    return;
-        //}
 
         #region methods: Change NetParameters
 
@@ -466,10 +450,7 @@ namespace NeuralNetBuilder.Builders
             try
             {
                 _onInitializerStatusChanged("Saving net parameters, please wait...");
-
-                //var jsonString = JsonConvert.SerializeObject(NetParameters, Formatting.Indented);
-                //await File.AppendAllTextAsync(_paths.NetParameters, jsonString);
-                await Export.SaveAsJsonAsync(NetParameters, _paths.NetParameters, true);
+                await Export.SaveAsJsonAsync(NetParameters, _paths.NetParameters, Formatting.Indented, true);
                 _onInitializerStatusChanged("Successfully saved net parameters.");
                 return true;
             }
@@ -480,10 +461,7 @@ namespace NeuralNetBuilder.Builders
             try
             {
                 _onInitializerStatusChanged("Saving trainer parameters, please wait...");
-
-                var jsonString = JsonConvert.SerializeObject(TrainerParameters, Formatting.Indented);
-                await File.AppendAllTextAsync(_paths.TrainerParameters, jsonString);
-
+                await Export.SaveAsJsonAsync(TrainerParameters, _paths.TrainerParameters, Formatting.Indented, true);
                 _onInitializerStatusChanged("Successfully saved trainer parameters.");
                 return true;
             }
