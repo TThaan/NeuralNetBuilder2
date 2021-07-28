@@ -140,6 +140,7 @@ namespace NeuralNetBuilder
                     return false;
                 }
 
+                // to NetParametersFactory? Do I want labels layer parameters (in net parameters) or only the layer in the net?
                 var labelsLayer = new LayerParameters
                 {
                     Id = ParameterBuilder.NetParameters.LayerParametersCollection.Count,

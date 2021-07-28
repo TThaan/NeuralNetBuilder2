@@ -1,4 +1,5 @@
-﻿using MatrixExtensions;
+﻿using CustomLogger;
+using MatrixExtensions;
 using NeuralNetBuilder.ActivatorFunctions;
 using NeuralNetBuilder.CostFunctions;
 using System;
@@ -178,7 +179,7 @@ namespace NeuralNetBuilder
 
         #region ILogger
 
-        public override string ToLog()
+        public override string ToLog(Details details = Details.All)
         {
             string result = LoggableName;
 
@@ -194,8 +195,16 @@ namespace NeuralNetBuilder
             result += ")\n";
             result += $"{Input.ToLog(nameof(Input))}";
             result += $"{Output.ToLog(nameof(Output))}";
+
+            if (details == Details.Little)
+                return result;
+
             result += $"{Weights.ToLog(nameof(Weights))}";
             result += $"{Biases.ToLog(nameof(Biases))}";
+
+            if (details == Details.Medium)
+                return result;
+
             result += $"{DCDA.ToLog(nameof(DCDA))}";
             result += $"{DADZ.ToLog(nameof(DADZ))}";
             result += $"{Delta.ToLog(nameof(Delta))}";

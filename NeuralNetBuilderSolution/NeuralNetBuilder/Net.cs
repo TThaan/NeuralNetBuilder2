@@ -1,4 +1,5 @@
-﻿using MatrixExtensions;
+﻿using CustomLogger;
+using MatrixExtensions;
 using NeuralNetBuilder.FactoriesAndParameters;
 using NeuralNetBuilder.FactoriesAndParameters.JsonConverters;
 using Newtonsoft.Json;
@@ -55,18 +56,31 @@ namespace NeuralNetBuilder
         #region ILoggable
 
         public string LoggableName => "Net";
-        public string ToLog()
+        public string ToLog(Details details = Details.All)
         {
             string result = LoggableName;
 
             result += $" (Layers: {Layers.Length})\n";
 
-            foreach (var layer in Layers)
+            if (details == Details.Little)
+                return result;
+
+            if (details == Details.Medium)
             {
-                result += $"\n{layer.ToLog()}";
+                foreach (var layer in Layers)
+                {
+                    result += $"\n{layer.ToLog(Details.Little)}";
+                }
+
+                return result;
             }
 
-            result += $"{Output?.ToLog(nameof(Output))}";
+            foreach (var layer in Layers)
+            {
+                result += $"\n{layer.ToLog(Details.All)}";
+            }
+
+            // result += $"{Output?.ToLog(nameof(Output))}";
             return result;
         }
 

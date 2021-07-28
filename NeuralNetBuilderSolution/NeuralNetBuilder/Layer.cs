@@ -7,6 +7,7 @@ using System;
 
 namespace NeuralNetBuilder
 {
+    // wa: IBaseLayer?
     public interface ILayer : ILoggable
     {
         int Id { get; set; }
@@ -204,7 +205,7 @@ namespace NeuralNetBuilder
         #region ILogger
 
         public string LoggableName => $"{GetType().Name} {Id}";
-        public virtual string ToLog()
+        public virtual string ToLog(Details details = Details.All)
         {
             string result = LoggableName;
 
@@ -218,8 +219,16 @@ namespace NeuralNetBuilder
                 ? $", {nameof(ProjectiveField)}: None"
                 : $", {nameof(ProjectiveField)}: {ProjectiveField.Id}";
             result += ")\n";
+
+            if (details == Details.Little)
+                return result;
+            
             result += $"{Input.ToLog(nameof(Input))}";
             result += $"{Output.ToLog(nameof(Output))}";
+
+            if (details == Details.Medium)
+                return result;
+
             result += $"{Weights.ToLog(nameof(Weights))}";
             result += $"{Biases.ToLog(nameof(Biases))}";
 

@@ -229,19 +229,21 @@ namespace NeuralNetBuilder
                 ? null
                 : new Logger(logName))
             {
+                LogNet(logger);
+
                 for (currentEpoch = CurrentEpoch; currentEpoch < Epochs; CurrentEpoch++)
                 {
                     for (currentSample = CurrentSample; currentSample < samplesTotal; CurrentSample++)
                     {
                         await learningNet.FeedForwardAsync(sampleSet.TrainSet[currentSample].Features);
+                        LogFeedForward(currentSample, logger);
 
-                        // Use ML Net to map keys/Labels to values?!
-                        // await learningNet.PropagateBackAsync(sampleSet.TrainSet[currentSample].Target);
-
+                        await learningNet.PropagateBackAsync(sampleSet.Targets[sampleSet.TrainSet[currentSample].Label]);
                         CurrentTotalCost = learningNet.CurrentTotalCost;
-                        await learningNet.AdjustWeightsAndBiasesAsync(LearningRate);
+                        LogBackProp(currentSample, logger);
 
-                        LogTraining(currentSample, logger);
+                        await learningNet.AdjustWeightsAndBiasesAsync(LearningRate);
+                        LogNet(logger);
 
                         if (TrainerStatus == TrainerStatus.Paused)
                         {
@@ -269,7 +271,7 @@ namespace NeuralNetBuilder
                 for (int i = 0;  i < testSet.Length; i++)
                 {
                     await LearningNet.FeedForwardAsync(testSet[i].Features);
-                    bool isOutputCorrect = TestSingleSample(testSet[i], i);
+                    bool isOutputCorrect = TestSingleSample(testSet[i]);
                     LastEpochsAccuracy = isOutputCorrect
                     ? (float)++correct / (correct + wrong)
                     : (float)correct / (correct + ++wrong);
@@ -278,10 +280,11 @@ namespace NeuralNetBuilder
                 }
             });
         }
-        private bool TestSingleSample(Sample testingSamples, int i)
+        private bool TestSingleSample(Sample sample)
         {
-            // return testingSamples[i].IsOutputApproximatelyCorrect(learningNet.Output);
-            throw new NotImplementedException();
+            int targetHotIndex = Array.IndexOf(SampleSet.Targets[sample.Label], 1);
+            int actualHotIndex = Array.IndexOf(LearningNet.Output, LearningNet.Output.GetMaximum());
+            return targetHotIndex == actualHotIndex;
         }
 
         public async Task Reset()
@@ -311,7 +314,7 @@ namespace NeuralNetBuilder
             if(TrainerStatus != TrainerStatus.Paused)
                 OnTrainerStatusChanged($"Epoch {currentEpoch} finished. (Accuracy: {lastEpochsAccuracy})");
 
-            if (currentSample == 1000)
+            if (currentSample == SamplesTotal)
             {
                 LearningRate *= LearningRateChange;
                 await TestAsync(_sampleSet.TestSet, logger);
@@ -324,6 +327,35 @@ namespace NeuralNetBuilder
 
         #region Logging
 
+        private void LogFeedForward(int sampleNr, ILogger logger)
+        {
+            if (logger == null) return;
+
+            logger?.Log($"\nFeed Forward (Sample: {sampleNr}/{samplesTotal})\n");
+
+            for (int i = 0; i < LearningNet.Layers.Length; i++)
+            {
+                logger?.Log(LearningNet.Layers[i], "\n", Details.Little);
+            }
+        }
+        private void LogBackProp(int sampleNr, ILogger logger)
+        {
+            if (logger == null) return;
+
+            logger?.Log($"\nBack Propagation (Sample: {sampleNr}/{samplesTotal})\n");
+
+            for (int i = LearningNet.Layers.Length - 1; i > 0; i--)
+            {
+                logger?.Log(LearningNet.Layers[i], "\n", Details.All);
+            }
+        }
+        private void LogNet(ILogger logger)
+        {
+            if (logger == null) return;
+
+            logger?.Log(learningNet, $"\n              + Current Net +\n\n", Details.Medium);
+        }
+        // Unused?
         private void LogTraining(int sampleNr, ILogger logger)
         {
             if (logger == null) return;
