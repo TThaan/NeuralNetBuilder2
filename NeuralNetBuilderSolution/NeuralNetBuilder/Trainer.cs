@@ -26,7 +26,7 @@ namespace NeuralNetBuilder
         float CurrentTotalCost { get; set; }        
         TrainerStatus TrainerStatus { get; set; }
         public string Message { get; set; }
-        Task Train(INet net, ISampleSet sampleSet, string logName);
+        Task Train(INet net, ISampleSet sampleSet, bool shuffleSamplesBeforeTraining, string logName);
         Task TestAsync(Sample[] testingSamples, ILogger logger = default);
         Task Reset();
         event TrainerStatusChangedEventHandler TrainerStatusChanged;
@@ -210,8 +210,13 @@ namespace NeuralNetBuilder
             }
         }
 
-        public async Task Train(INet net, ISampleSet sampleSet, string logName) // Better as internal? Only allow access for clients via initializer?
+        public async Task Train(INet net, ISampleSet sampleSet, bool shuffleSamplesBeforeTraining, string logName) // Better as internal? Only allow access for clients via initializer?
         {
+            if (shuffleSamplesBeforeTraining)
+            {
+                await sampleSet.TrainSet.ShuffleAsync();
+            }
+
             // Use Event, don't throw exception here!?
             // ta: net and sample set cannot be null since this is checked in initializer!
             OriginalNet = net.GetCopy() ?? throw new NullReferenceException(
@@ -280,12 +285,6 @@ namespace NeuralNetBuilder
                 }
             });
         }
-        private bool TestSingleSample(Sample sample)
-        {
-            int targetHotIndex = Array.IndexOf(SampleSet.Targets[sample.Label], 1);
-            int actualHotIndex = Array.IndexOf(LearningNet.Output, LearningNet.Output.GetMaximum());
-            return targetHotIndex == actualHotIndex;
-        }
 
         public async Task Reset()
         {
@@ -322,6 +321,12 @@ namespace NeuralNetBuilder
                 await _sampleSet.TrainSet.ShuffleAsync();
             }
         }
+        private bool TestSingleSample(Sample sample)
+        {
+            int targetHotIndex = Array.IndexOf(SampleSet.Targets[sample.Label], 1);
+            int actualHotIndex = Array.IndexOf(LearningNet.Output, LearningNet.Output.GetMaximum());
+            return targetHotIndex == actualHotIndex;
+        }
 
         #endregion
 
@@ -343,8 +348,10 @@ namespace NeuralNetBuilder
             if (logger == null) return;
 
             logger?.Log($"\nBack Propagation (Sample: {sampleNr}/{samplesTotal})\n");
+            logger?.Log($"Label: {_sampleSet.TrainSet[sampleNr].Label}, Target:\n{_sampleSet.Targets[_sampleSet.TrainSet[sampleNr].Label].ToLog()}");
 
-            for (int i = LearningNet.Layers.Length - 1; i > 0; i--)
+            int layersCount = LearningNet.Layers.Length;
+            for (int i = layersCount - 1; i > 0; i--)
             {
                 logger?.Log(LearningNet.Layers[i], "\n", Details.All);
             }
@@ -387,8 +394,11 @@ namespace NeuralNetBuilder
             }
 
             logger?.Log(_sampleSet.TestSet[sampleNr].Features.ToLog("Features"));
-            //logger?.Log(_sampleSet.TestSet[sampleNr].Target.ToLog("Target"));
+            logger?.Log($"Label: {_sampleSet.TestSet[sampleNr].Label}");
+            logger?.Log(_sampleSet.Targets[_sampleSet.TestSet[sampleNr].Label].ToLog("\nTarget"));
+            // Task: Show guessed label!
             logger?.Log(learningNet.Output.ToLog(nameof(learningNet.Output)));
+            // Task: Show value ('probability')!
             logger?.Log($"\nTestResult: {(isOutputCorrect ? "Correct" : "Wrong")}\n\n");
 
             if (sampleNr == _sampleSet.TestSet.Length - 1)

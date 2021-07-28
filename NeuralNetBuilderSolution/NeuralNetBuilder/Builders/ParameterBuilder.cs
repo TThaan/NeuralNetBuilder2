@@ -138,6 +138,9 @@ namespace NeuralNetBuilder.Builders
                     case ParameterName.act:
                         SetActivationTypeAtLayer(layerId, int.Parse(value));
                         return;
+                    case ParameterName.N:
+                        SetNeuronsAtLayer(layerId, int.Parse(value));
+                        return;
                     case ParameterName.wMax:
                         SetWeightMaxAtLayer(layerId, float.Parse(value));
                         return;

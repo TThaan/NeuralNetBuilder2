@@ -95,7 +95,7 @@ namespace NeuralNetBuilder
 
         #region methods
 
-        public async Task<bool> TrainAsync(ISampleSet sampleSet)
+        public async Task<bool> TrainAsync(ISampleSet sampleSet, bool shuffleSampleBeforeTraining = false)
         {
             if (Trainer == null)
             {
@@ -116,7 +116,7 @@ namespace NeuralNetBuilder
             try
             {
                 OnInitializerStatusChanged($"\n            Training, please wait...\n");
-                await Trainer.Train(Net, sampleSet, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
+                await Trainer.Train(Net, sampleSet, shuffleSampleBeforeTraining, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
                 TrainedNet = Trainer.TrainedNet?.GetCopy();
                 OnInitializerStatusChanged($"\n            Finished training.\n");
                 return true;
