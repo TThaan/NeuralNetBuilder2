@@ -445,23 +445,39 @@ namespace NeuralNetBuilder.Builders
             catch (Exception e) { _onInitializerStatusChanged($"{e.Message}"); return false; }
         }
 
-        public async Task<bool> SaveNetParametersAsync()
+        public async Task<bool> SaveNetParametersAsync(string formatting_String = default)
         {
+            Formatting formatting = Formatting.None;
+
+            if (string.Equals(formatting_String, "indented"))
+                formatting = Formatting.Indented;
+            else if (formatting_String != default)
+                throw new ArgumentException($"{formatting_String} is not a valid parameter for {MainCommand.save} {LoadAndSaveCommand.netpar}.\n" +
+                    $"When saving net parameters you can add parameter 'indented' or no parameter at all.");
+
             try
             {
                 _onInitializerStatusChanged("Saving net parameters, please wait...");
-                await Export.SaveAsJsonAsync(NetParameters, _paths.NetParameters, Formatting.Indented, true);
+                await Export.SaveAsJsonAsync(NetParameters, _paths.NetParameters, formatting, true);
                 _onInitializerStatusChanged("Successfully saved net parameters.");
                 return true;
             }
             catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
         }
-        public async Task<bool> SaveTrainerParametersAsync()
+        public async Task<bool> SaveTrainerParametersAsync(string formatting_String = default)
         {
+            Formatting formatting = Formatting.None;
+
+            if (string.Equals(formatting_String, "indented"))
+                formatting = Formatting.Indented;
+            else if (formatting_String != default)
+                throw new ArgumentException($"{formatting_String} is not a valid parameter for {MainCommand.save} {LoadAndSaveCommand.netpar}.\n" +
+                    $"When saving trainer parameters you can add parameter 'indented' or no parameter at all.");
+
             try
             {
                 _onInitializerStatusChanged("Saving trainer parameters, please wait...");
-                await Export.SaveAsJsonAsync(TrainerParameters, _paths.TrainerParameters, Formatting.Indented, true);
+                await Export.SaveAsJsonAsync(TrainerParameters, _paths.TrainerParameters, formatting, true);
                 _onInitializerStatusChanged("Successfully saved trainer parameters.");
                 return true;
             }

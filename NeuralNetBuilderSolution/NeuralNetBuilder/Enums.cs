@@ -36,7 +36,7 @@
     public enum ShowCommand
     {
         Undefined,
-        help, settings, par, netpar, trainerpar,
+        help, settings, par, netpar, trainerpar, net
     }
     public enum PathCommand
     {

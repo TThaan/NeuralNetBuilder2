@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -91,6 +92,25 @@ namespace NeuralNetBuilder
 
                 return result;
             });
+        }
+
+        public static T GetMaximum<T>(this IEnumerable<T> collection)
+        {
+            return collection.OrderByDescending(x => x).First();
+        }
+        public static T GetMaximum<T>(this IEnumerable iEnum)
+        {
+            var result = Enumerable.Cast<T>(iEnum);
+            return result.OrderByDescending(x => x).First();
+        }
+        public static T GetMinimum<T>(this IEnumerable<T> collection)
+        {
+            return collection.OrderBy(x => x).First();
+        }
+        public static T GetMinimum<T>(this IEnumerable iEnum)
+        {
+            var result = Enumerable.Cast<T>(iEnum);
+            return result.OrderBy(x => x).First();
         }
     }
 }

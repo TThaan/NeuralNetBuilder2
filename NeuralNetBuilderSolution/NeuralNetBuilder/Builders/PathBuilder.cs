@@ -127,6 +127,8 @@ namespace NeuralNetBuilder.Builders
             initializedNet = string.Empty;
             trainedNet = string.Empty;
 
+            sampleSet = string.Empty;
+
             _onInitializerStatusChanged($"Path for all files has been reset.");
         }
         public void UseGeneralPathAndDefaultNames()
@@ -136,6 +138,8 @@ namespace NeuralNetBuilder.Builders
             SetLogPath(Path.Combine(General, FileName_Prefix, FileName_Log + FileName_Suffix));
             SetInitializedNetPath(Path.Combine(General, FileName_Prefix, FileName_InitializedNet + FileName_Suffix));
             SetTrainedNetPath(Path.Combine(General, FileName_Prefix, FileName_TrainedNet + FileName_Suffix));
+
+            SetSampleSetPath(Path.Combine(General, FileName_Prefix, FileName_SampleSet + FileName_Suffix));
         }
 
         #region redundant?

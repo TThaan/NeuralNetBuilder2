@@ -35,8 +35,8 @@ namespace NeuralNetBuilder
         {
             get
             {
-                if (paths == null)
-                    OnInitializerStatusChanged("Paths are null");
+                //if (paths == null)
+                //    OnInitializerStatusChanged("Paths are null");
                 return paths;
             }
         }
@@ -44,8 +44,8 @@ namespace NeuralNetBuilder
         {
             get
             {
-                if (parameterBuilder == null)
-                    OnInitializerStatusChanged("ParameterBuilder is null");
+                //if (parameterBuilder == null)
+                //    OnInitializerStatusChanged("ParameterBuilder is null");
                 return parameterBuilder;
             }
         }
@@ -53,8 +53,8 @@ namespace NeuralNetBuilder
         {
             get
             {
-                if (sampleSet == null)
-                    OnInitializerStatusChanged("SampleSet is null");
+                //if (sampleSet == null)
+                //    OnInitializerStatusChanged("SampleSet is null");
                 return sampleSet;
             }
             set { sampleSet = value; }
@@ -63,8 +63,8 @@ namespace NeuralNetBuilder
         {
             get
             {
-                if (net == null)
-                    OnInitializerStatusChanged("Net is null");
+                //if (net == null)
+                //    OnInitializerStatusChanged("Net is null");
                 return net;
             }
             set { net = value; }
@@ -73,8 +73,8 @@ namespace NeuralNetBuilder
         {
             get
             {
-                if (trainedNet == null)
-                    OnInitializerStatusChanged("TrainedNet is null");
+                //if (trainedNet == null)
+                //    OnInitializerStatusChanged("TrainedNet is null");
                 return trainedNet;
             }
             set { trainedNet = value; }
@@ -83,8 +83,8 @@ namespace NeuralNetBuilder
         {
             get
             {
-                if (trainer == null)
-                    OnInitializerStatusChanged("Trainer is null");
+                //if (trainer == null)
+                //    OnInitializerStatusChanged("Trainer is null");
                 return trainer;
             }
             set { trainer = value; }
@@ -134,9 +134,9 @@ namespace NeuralNetBuilder
             bool appendDefaultLabelsLayer = parameter == "true" ? true : parameter == "false" ? false : throw new ArgumentException("Parameter must be 'true' or 'false'.");
             if (appendDefaultLabelsLayer)
             {
-                if (SampleSet == null)
+                if (SampleSet == null || SampleSet.TrainSet == null || SampleSet.TestSet == null)
                 {
-                    OnInitializerStatusChanged("You need a sample set to append a default labels layer!");
+                    OnInitializerStatusChanged("You need a sample set (incl a train set and a test set) to append a default labels layer!");
                     return false;
                 }
 
