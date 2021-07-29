@@ -29,14 +29,15 @@
     public enum MainCommand
     {
         Undefined,
-        path, show, create, load, save, param, layer,
+        path, show, create, load, save, param, layer, log,
         // stand alone - commands (no sub command, parameters etc needed):
-        logon, logoff, train, test
+        train, test
     }
     public enum ShowCommand
     {
         Undefined,
-        help, settings, par, netpar, trainerpar, net
+        help, settings, par, netpar, trainerpar, net,
+        samples
     }
     public enum PathCommand
     {
@@ -61,10 +62,13 @@
     {
         Undefined, add, del, left, right
     }
-    public enum InputHelper
+    public enum LogCommand
     {
-        L, // layer
+        on, off
     }
+    //public enum InputHelper
+    //{
+    //}
     public enum ParameterName
     {
         Undefined,
@@ -74,5 +78,16 @@
         act, wMax, wMin, bMax, bMin, N,
         // trainer parameters
         cost, epochs, Eta, dEta,
+
+        L, // layer index,
+        test, label // "load samples parameters"
+    }
+    public enum PresetValue
+    {
+        undefined, 
+        shuffle,    // Makes the trainer shuffle the training samples before the first training
+        append,     // Appends a neuronal layer to the net automatically designed to fit the labels/targets of the sample set.
+        indented,   // Tells the Json serializer to save with parameter Formatting.Indented.
+        no
     }
 }

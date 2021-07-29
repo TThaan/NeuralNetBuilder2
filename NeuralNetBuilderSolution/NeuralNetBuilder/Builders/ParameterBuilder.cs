@@ -81,8 +81,15 @@ namespace NeuralNetBuilder.Builders
 
         #region methods
 
-        public void ChangeParameter(string parameter, int layerId)
+        public void ChangeParameter(IEnumerable<string> parameter)
         {
+            // Get layerID
+
+            // foreach parameter set parameter
+
+
+
+
             ParameterName name = parameter.Split(':').First().ToEnum<ParameterName>();
             string value = parameter.Split(':').Last();
 
@@ -448,15 +455,15 @@ namespace NeuralNetBuilder.Builders
             catch (Exception e) { _onInitializerStatusChanged($"{e.Message}"); return false; }
         }
 
-        public async Task<bool> SaveNetParametersAsync(string formatting_String = default)
+        public async Task<bool> SaveNetParametersAsync(PresetValue indented = PresetValue.indented)
         {
             Formatting formatting = Formatting.None;
 
-            if (string.Equals(formatting_String, "indented"))
+            if (indented == PresetValue.indented)
                 formatting = Formatting.Indented;
-            else if (formatting_String != default)
-                throw new ArgumentException($"{formatting_String} is not a valid parameter for {MainCommand.save} {LoadAndSaveCommand.netpar}.\n" +
-                    $"When saving net parameters you can add parameter 'indented' or no parameter at all.");
+            else if (indented != PresetValue.no)
+                throw new ArgumentException($"{indented} is not a valid parameter for {MainCommand.save} {LoadAndSaveCommand.netpar}.\n" +
+                    $"When saving net parameters you can add parameter {PresetValue.indented} or no parameter at all.");
 
             try
             {
@@ -467,15 +474,15 @@ namespace NeuralNetBuilder.Builders
             }
             catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
         }
-        public async Task<bool> SaveTrainerParametersAsync(string formatting_String = default)
+        public async Task<bool> SaveTrainerParametersAsync(PresetValue indented = PresetValue.indented)
         {
             Formatting formatting = Formatting.None;
 
-            if (string.Equals(formatting_String, "indented"))
+            if (indented == PresetValue.indented)
                 formatting = Formatting.Indented;
-            else if (formatting_String != default)
-                throw new ArgumentException($"{formatting_String} is not a valid parameter for {MainCommand.save} {LoadAndSaveCommand.netpar}.\n" +
-                    $"When saving trainer parameters you can add parameter 'indented' or no parameter at all.");
+            else if (indented != default)
+                throw new ArgumentException($"{indented} is not a valid parameter for {MainCommand.save} {LoadAndSaveCommand.netpar}.\n" +
+                    $"When saving trainer parameters you can add parameter {PresetValue.indented} or no parameter at all.");
 
             try
             {

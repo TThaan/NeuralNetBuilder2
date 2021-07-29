@@ -95,44 +95,41 @@ namespace NeuralNetBuilder
 
         #region methods
 
-        public async Task<bool> TrainAsync(ISampleSet sampleSet, bool shuffleSampleBeforeTraining = false)
+        /// <summary>
+        /// Valid parameters: Undefined, Shuffle
+        /// </summary>
+        public async Task<bool> TrainAsync(ISampleSet sampleSet, PresetValue parameter = PresetValue.undefined)
         {
             if (Trainer == null)
-            {
-                OnInitializerStatusChanged("\nYou need a trainer to start training!");
-                return false;
-            }
+                throw new ArgumentException("\nYou need a trainer to start training!");
             if (Net == null)
-            {
-                OnInitializerStatusChanged("\nYou need a net to start training!");
-                return false;
-            }
+                throw new ArgumentException("\nYou need a net to start training!");
             if (sampleSet == null)
-            {
-                OnInitializerStatusChanged("\nYou need a sample set to start training!");
-                return false;
-            }
+                throw new ArgumentException("\nYou need a sample set to start training!");
+            if (parameter != PresetValue.undefined && parameter != PresetValue.shuffle)
+                throw new ArgumentException($"Parameter {parameter} is not valid here. Use {PresetValue.shuffle} or no parameter.");
 
             try
             {
                 OnInitializerStatusChanged($"\n            Training, please wait...\n");
-                await Trainer.Train(Net, sampleSet, shuffleSampleBeforeTraining, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
+                await Trainer.Train(Net, sampleSet, parameter == PresetValue.shuffle, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
                 TrainedNet = Trainer.TrainedNet?.GetCopy();
                 OnInitializerStatusChanged($"\n            Finished training.\n");
                 return true;
             }
             catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
         }
-        public async Task<bool> CreateNetAsync(string parameter)
+        /// <summary>
+        /// Valid parameters: Undefined, AppendLabelsLayer
+        /// </summary>
+        public async Task<bool> CreateNetAsync(PresetValue appendLabelsLayer = PresetValue.no)
         {
             if (ParameterBuilder.NetParameters == null)
-            {
-                OnInitializerStatusChanged("You need net parameters to create the net!");
-                return false;
-            }
+                throw new ArgumentException("You need net parameters to create the net!");
+            if (appendLabelsLayer != PresetValue.undefined && appendLabelsLayer != PresetValue.append)
+                throw new ArgumentException($"Parameter {appendLabelsLayer} is not valid here. Use {PresetValue.append} or no parameter.");
 
-            bool appendDefaultLabelsLayer = parameter == "true" ? true : parameter == "false" ? false : throw new ArgumentException("Parameter must be 'true' or 'false'.");
-            if (appendDefaultLabelsLayer)
+            if (appendLabelsLayer == PresetValue.append)
             {
                 if (SampleSet == null || SampleSet.TrainSet == null || SampleSet.TestSet == null)
                 {
@@ -146,7 +143,7 @@ namespace NeuralNetBuilder
                     Id = ParameterBuilder.NetParameters.LayerParametersCollection.Count,
                     NeuronsPerLayer = SampleSet.Targets.Count,
                     ActivationType = ActivationType.Tanh,
-                    WeightMin = -1, 
+                    WeightMin = -1,
                     WeightMax = 1,
                     BiasMin = 0,
                     BiasMax = 0,
@@ -154,7 +151,7 @@ namespace NeuralNetBuilder
 
                 ParameterBuilder.NetParameters.LayerParametersCollection.Add(labelsLayer);
             }
-
+            
             return await Task.Run(() =>
             {
                 try
