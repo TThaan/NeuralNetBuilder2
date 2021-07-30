@@ -28,24 +28,12 @@ namespace NeuralNetBuilder
             }
             return string.Join(separator, collectionWithLineBreaks.Select(x => x.ToString()));
         }
-        /// <summary>
-        /// Supports following enums: ActivationType, WeightInitType, CostType, ParameterName
-        /// Other types will cause an exception throw.
-        /// </summary>
-        public static TEnum ToEnum<TEnum>(this string enumAsString, bool throwExceptionOnWrongParameter = true)
+        public static TEnum ToEnum<TEnum>(this string enumAsString)
         {
-            TEnum result = default;
+            TEnum result;
 
-            // Do I really need to restrict enum types?
             Type enumType = typeof(TEnum);
-            //if (
-            //    enumType != typeof(ActivationType) &&
-            //    enumType != typeof(CostType) &&
-            //    enumType != typeof(WeightInitType) &&
-            //    enumType != typeof(ParameterName))
-            //    throw new ArgumentException($"ToEnum(..) does not support type {enumType.Name}. \nSo far it only supports the following enums: ActivationType, WeightInitType, CostType");
-
-            //var names = Enum.GetNames(enumType);
+            
             var values = Enum.GetValues(enumType);
             int length = values.Length;
 

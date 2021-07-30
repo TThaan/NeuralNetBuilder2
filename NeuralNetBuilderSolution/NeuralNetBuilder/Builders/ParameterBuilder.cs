@@ -81,95 +81,94 @@ namespace NeuralNetBuilder.Builders
 
         #region methods
 
-        public void ChangeParameter(IEnumerable<string> parameter)
+        public void ChangeParameter(IEnumerable<string> parameters, int layerId)
         {
-            // Get layerID
-
-            // foreach parameter set parameter
-
-
-
-
-            ParameterName name = parameter.Split(':').First().ToEnum<ParameterName>();
-            string value = parameter.Split(':').Last();
+            // Already done in 'CheckParameters()'?
+            // int.TryParse(layerId_String, out int layerId);
 
             try
             {
-                // Trainer Parameters
-
-                switch (name)
+                foreach (var p in parameters)
                 {
-                    case ParameterName.Eta:
-                        SetLearningRate(float.Parse(value));
-                        return;
-                    case ParameterName.dEta:
-                        SetLearningRateChange(float.Parse(value));
-                        return;
-                    case ParameterName.cost:
-                        SetCostType(int.Parse(value));
-                        return;
-                    case ParameterName.epochs:
-                        SetEpochs(int.Parse(value));
-                        return;
+                    ParameterName name = p.Split(':').First().ToEnum<ParameterName>();
+                    string value = p.Split(':').Last();
+
+                    // Trainer Parameters
+
+                    switch (name)
+                    {
+                        case ParameterName.Eta:
+                            SetLearningRate(float.Parse(value));
+                            return;
+                        case ParameterName.dEta:
+                            SetLearningRateChange(float.Parse(value));
+                            return;
+                        case ParameterName.cost:
+                            SetCostType(int.Parse(value));
+                            return;
+                        case ParameterName.epochs:
+                            SetEpochs(int.Parse(value));
+                            return;
+                    }
+
+                    // Net parameters
+
+                    switch (name)
+                    {
+                        case ParameterName.wInit:
+                            SetWeightInitType(int.Parse(value));
+                            return;
+                            // Or glob as layerId?
+                            //case ParameterName.wMinGlob:
+                            //    SetWeightMin_Globally(float.Parse(parameterValue));
+                            //    break;
+                            //case ParameterName.wMaxGlobally:
+                            //    SetWeightMax_Globally(float.Parse(parameterValue));
+                            //    break;
+                            //case ParameterName.bMinGlob:
+                            //    SetBiasMin_Globally(float.Parse(parameterValue));
+                            //    break;
+                            //case ParameterName.bMaxGlob:
+                            //    SetBiasMax_Globally(float.Parse(parameterValue));
+                            //    break;
+                    }
+
+                    // Layer Parameters
+
+                    if (layerId < 0 || layerId > LayerParametersCollection.Count - 1)
+                        throw new ArgumentException("Missing an existing layer id!");
+
+                    switch (name)
+                    {
+                        case ParameterName.act:
+                            SetActivationTypeAtLayer(layerId, int.Parse(value));
+                            return;
+                        case ParameterName.N:
+                            SetNeuronsAtLayer(layerId, int.Parse(value));
+                            return;
+                        case ParameterName.wMax:
+                            SetWeightMaxAtLayer(layerId, float.Parse(value));
+                            return;
+                        case ParameterName.wMin:
+                            SetWeightMinAtLayer(layerId, float.Parse(value));
+                            return;
+                        case ParameterName.bMax:
+                            SetBiasMaxAtLayer(layerId, float.Parse(value));
+                            return;
+                        case ParameterName.bMin:
+                            SetBiasMinAtLayer(layerId, float.Parse(value));
+                            return;
+                    };
+
+
+                    throw new ArgumentException($"Parameter {name} unknown.");
                 }
-
-                // Net parameters
-
-                switch (name)
-                {
-                    case ParameterName.wInit:
-                        SetWeightInitType(int.Parse(value));
-                        return;
-                    // Or glob as layerId?
-                    //case ParameterName.wMinGlob:
-                    //    SetWeightMin_Globally(float.Parse(parameterValue));
-                    //    break;
-                    //case ParameterName.wMaxGlobally:
-                    //    SetWeightMax_Globally(float.Parse(parameterValue));
-                    //    break;
-                    //case ParameterName.bMinGlob:
-                    //    SetBiasMin_Globally(float.Parse(parameterValue));
-                    //    break;
-                    //case ParameterName.bMaxGlob:
-                    //    SetBiasMax_Globally(float.Parse(parameterValue));
-                    //    break;
-                }
-
-                // Layer Parameters
-                
-                if (layerId < 0 || layerId > LayerParametersCollection.Count - 1)
-                    throw new ArgumentException("Missing an existing layer id!");
-                
-                switch (name)
-                {
-                    case ParameterName.act:
-                        SetActivationTypeAtLayer(layerId, int.Parse(value));
-                        return;
-                    case ParameterName.N:
-                        SetNeuronsAtLayer(layerId, int.Parse(value));
-                        return;
-                    case ParameterName.wMax:
-                        SetWeightMaxAtLayer(layerId, float.Parse(value));
-                        return;
-                    case ParameterName.wMin:
-                        SetWeightMinAtLayer(layerId, float.Parse(value));
-                        return;
-                    case ParameterName.bMax:
-                        SetBiasMaxAtLayer(layerId, float.Parse(value));
-                        return;
-                    case ParameterName.bMin:
-                        SetBiasMinAtLayer(layerId, float.Parse(value));
-                        return;
-                };
-                    
-                
-                throw new ArgumentException($"Parameter {name} unknown.");
             }
             catch (Exception e) { _onInitializerStatusChanged(e.Message); }
 
             //PropertyInfo pi = NetParameters.GetType().GetProperty(parameterName);
             //pi.SetValue(NetParameters, parameterValue);
-        }
+    }
 
         #region methods: Change NetParameters
 
