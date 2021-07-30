@@ -44,7 +44,7 @@ namespace NeuralNetBuilder
                     return result;
             }
 
-            throw new ArgumentException($"{enumType.Name}.{enumAsString} does not exist.");
+            throw new ArgumentException($"'{enumAsString}' does not exist for {enumType.Name}.");
         }
         // Implement multiple dimensions:
         public static List<T> ToList<T>(this Array arr)
