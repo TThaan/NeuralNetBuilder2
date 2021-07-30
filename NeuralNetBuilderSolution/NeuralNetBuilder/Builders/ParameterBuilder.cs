@@ -4,8 +4,6 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace NeuralNetBuilder.Builders
@@ -81,94 +79,94 @@ namespace NeuralNetBuilder.Builders
 
         #region methods
 
-        public void ChangeParameter(IEnumerable<string> parameters, int layerId)
-        {
-            // Already done in 'CheckParameters()'?
-            // int.TryParse(layerId_String, out int layerId);
+    //    public void ChangeParameter(IEnumerable<string> parameters, int layerId)
+    //    {
+    //        // Already done in 'CheckParameters()'?
+    //        // int.TryParse(layerId_String, out int layerId);
 
-            try
-            {
-                foreach (var p in parameters)
-                {
-                    ParameterName name = p.Split(':').First().ToEnum<ParameterName>();
-                    string value = p.Split(':').Last();
+    //        try
+    //        {
+    //            foreach (var p in parameters)
+    //            {
+    //                ParameterName name = p.Split(':').First().ToEnum<ParameterName>();
+    //                string value = p.Split(':').Last();
 
-                    // Trainer Parameters
+    //                // Trainer Parameters
 
-                    switch (name)
-                    {
-                        case ParameterName.Eta:
-                            SetLearningRate(float.Parse(value));
-                            return;
-                        case ParameterName.dEta:
-                            SetLearningRateChange(float.Parse(value));
-                            return;
-                        case ParameterName.cost:
-                            SetCostType(int.Parse(value));
-                            return;
-                        case ParameterName.epochs:
-                            SetEpochs(int.Parse(value));
-                            return;
-                    }
+    //                switch (name)
+    //                {
+    //                    case ParameterName.Eta:
+    //                        SetLearningRate(float.Parse(value));
+    //                        return;
+    //                    case ParameterName.dEta:
+    //                        SetLearningRateChange(float.Parse(value));
+    //                        return;
+    //                    case ParameterName.cost:
+    //                        SetCostType(int.Parse(value));
+    //                        return;
+    //                    case ParameterName.epochs:
+    //                        SetEpochs(int.Parse(value));
+    //                        return;
+    //                }
 
-                    // Net parameters
+    //                // Net parameters
 
-                    switch (name)
-                    {
-                        case ParameterName.wInit:
-                            SetWeightInitType(int.Parse(value));
-                            return;
-                            // Or glob as layerId?
-                            //case ParameterName.wMinGlob:
-                            //    SetWeightMin_Globally(float.Parse(parameterValue));
-                            //    break;
-                            //case ParameterName.wMaxGlobally:
-                            //    SetWeightMax_Globally(float.Parse(parameterValue));
-                            //    break;
-                            //case ParameterName.bMinGlob:
-                            //    SetBiasMin_Globally(float.Parse(parameterValue));
-                            //    break;
-                            //case ParameterName.bMaxGlob:
-                            //    SetBiasMax_Globally(float.Parse(parameterValue));
-                            //    break;
-                    }
+    //                switch (name)
+    //                {
+    //                    case ParameterName.wInit:
+    //                        SetWeightInitType(int.Parse(value));
+    //                        return;
+    //                        // Or glob as layerId?
+    //                        //case ParameterName.wMinGlob:
+    //                        //    SetWeightMin_Globally(float.Parse(parameterValue));
+    //                        //    break;
+    //                        //case ParameterName.wMaxGlobally:
+    //                        //    SetWeightMax_Globally(float.Parse(parameterValue));
+    //                        //    break;
+    //                        //case ParameterName.bMinGlob:
+    //                        //    SetBiasMin_Globally(float.Parse(parameterValue));
+    //                        //    break;
+    //                        //case ParameterName.bMaxGlob:
+    //                        //    SetBiasMax_Globally(float.Parse(parameterValue));
+    //                        //    break;
+    //                }
 
-                    // Layer Parameters
+    //                // Layer Parameters
 
-                    if (layerId < 0 || layerId > LayerParametersCollection.Count - 1)
-                        throw new ArgumentException("Missing an existing layer id!");
+    //                if (layerId < 0 || layerId > LayerParametersCollection.Count - 1)
+    //                    throw new ArgumentException("Missing an existing layer id!");
 
-                    switch (name)
-                    {
-                        case ParameterName.act:
-                            SetActivationTypeAtLayer(layerId, int.Parse(value));
-                            return;
-                        case ParameterName.N:
-                            SetNeuronsAtLayer(layerId, int.Parse(value));
-                            return;
-                        case ParameterName.wMax:
-                            SetWeightMaxAtLayer(layerId, float.Parse(value));
-                            return;
-                        case ParameterName.wMin:
-                            SetWeightMinAtLayer(layerId, float.Parse(value));
-                            return;
-                        case ParameterName.bMax:
-                            SetBiasMaxAtLayer(layerId, float.Parse(value));
-                            return;
-                        case ParameterName.bMin:
-                            SetBiasMinAtLayer(layerId, float.Parse(value));
-                            return;
-                    };
+    //                switch (name)
+    //                {
+    //                    case ParameterName.act:
+    //                        SetActivationTypeAtLayer(layerId, int.Parse(value));
+    //                        return;
+    //                    case ParameterName.N:
+    //                        SetNeuronsAtLayer(layerId, int.Parse(value));
+    //                        return;
+    //                    case ParameterName.wMax:
+    //                        SetWeightMaxAtLayer(layerId, float.Parse(value));
+    //                        return;
+    //                    case ParameterName.wMin:
+    //                        SetWeightMinAtLayer(layerId, float.Parse(value));
+    //                        return;
+    //                    case ParameterName.bMax:
+    //                        SetBiasMaxAtLayer(layerId, float.Parse(value));
+    //                        return;
+    //                    case ParameterName.bMin:
+    //                        SetBiasMinAtLayer(layerId, float.Parse(value));
+    //                        return;
+    //                };
 
 
-                    throw new ArgumentException($"Parameter {name} unknown.");
-                }
-            }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); }
+    //                throw new ArgumentException($"Parameter {name} unknown.");
+    //            }
+    //        }
+    //        catch (Exception e) { _onInitializerStatusChanged(e.Message); }
 
-            //PropertyInfo pi = NetParameters.GetType().GetProperty(parameterName);
-            //pi.SetValue(NetParameters, parameterValue);
-    }
+    //        //PropertyInfo pi = NetParameters.GetType().GetProperty(parameterName);
+    //        //pi.SetValue(NetParameters, parameterValue);
+    //}
 
         #region methods: Change NetParameters
 
@@ -454,16 +452,8 @@ namespace NeuralNetBuilder.Builders
             catch (Exception e) { _onInitializerStatusChanged($"{e.Message}"); return false; }
         }
 
-        public async Task<bool> SaveNetParametersAsync(PresetValue indented = PresetValue.indented)
+        public async Task<bool> SaveNetParametersAsync(Formatting formatting = Formatting.Indented)
         {
-            Formatting formatting = Formatting.None;
-
-            if (indented == PresetValue.indented)
-                formatting = Formatting.Indented;
-            else if (indented != PresetValue.no)
-                throw new ArgumentException($"{indented} is not a valid parameter for {MainCommand.save} {LoadAndSaveCommand.netpar}.\n" +
-                    $"When saving net parameters you can add parameter {PresetValue.indented} or no parameter at all.");
-
             try
             {
                 _onInitializerStatusChanged("Saving net parameters, please wait...");
@@ -473,16 +463,8 @@ namespace NeuralNetBuilder.Builders
             }
             catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
         }
-        public async Task<bool> SaveTrainerParametersAsync(PresetValue indented = PresetValue.indented)
+        public async Task<bool> SaveTrainerParametersAsync(Formatting formatting = Formatting.Indented)
         {
-            Formatting formatting = Formatting.None;
-
-            if (indented == PresetValue.indented)
-                formatting = Formatting.Indented;
-            else if (indented != default)
-                throw new ArgumentException($"{indented} is not a valid parameter for {MainCommand.save} {LoadAndSaveCommand.netpar}.\n" +
-                    $"When saving trainer parameters you can add parameter {PresetValue.indented} or no parameter at all.");
-
             try
             {
                 _onInitializerStatusChanged("Saving trainer parameters, please wait...");
