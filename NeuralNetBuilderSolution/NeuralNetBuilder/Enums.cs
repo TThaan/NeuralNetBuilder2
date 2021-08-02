@@ -26,12 +26,4 @@
     {
         Undefined, Initialized, Running, Paused, Finished   // Raw instead of Undefined?
     }
-    public enum PresetValue
-    {
-        undefined,
-        shuffle,    // Makes the trainer shuffle the training samples before the first training
-        append,     // Appends a neuronal layer to the net automatically designed to fit the labels/targets of the sample set.
-        indented,   // Tells the Json serializer to save with parameter Formatting.Indented.
-        no
-    }
 }

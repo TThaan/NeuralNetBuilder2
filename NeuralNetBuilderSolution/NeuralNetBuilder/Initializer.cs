@@ -95,10 +95,7 @@ namespace NeuralNetBuilder
 
         #region methods
 
-        /// <summary>
-        /// Valid parameters: Undefined, Shuffle
-        /// </summary>
-        public async Task<bool> TrainAsync(ISampleSet sampleSet, PresetValue parameter = PresetValue.undefined)
+        public async Task<bool> TrainAsync(ISampleSet sampleSet, bool shuffle = false)
         {
             if (Trainer == null)
                 throw new ArgumentException("\nYou need a trainer to start training!");
@@ -106,13 +103,11 @@ namespace NeuralNetBuilder
                 throw new ArgumentException("\nYou need a net to start training!");
             if (sampleSet == null)
                 throw new ArgumentException("\nYou need a sample set to start training!");
-            if (parameter != PresetValue.undefined && parameter != PresetValue.shuffle)
-                throw new ArgumentException($"Parameter {parameter} is not valid here. Use {PresetValue.shuffle} or no parameter.");
 
             try
             {
                 OnInitializerStatusChanged($"\n            Training, please wait...\n");
-                await Trainer.Train(Net, sampleSet, parameter == PresetValue.shuffle, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
+                await Trainer.Train(Net, sampleSet, shuffle, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
                 TrainedNet = Trainer.TrainedNet?.GetCopy();
                 OnInitializerStatusChanged($"\n            Finished training.\n");
                 return true;
@@ -122,14 +117,12 @@ namespace NeuralNetBuilder
         /// <summary>
         /// Valid parameters: Undefined, AppendLabelsLayer
         /// </summary>
-        public async Task<bool> CreateNetAsync(PresetValue appendLabelsLayer = PresetValue.no)
+        public async Task<bool> CreateNetAsync(bool appendLabelsLayer = false)
         {
             if (ParameterBuilder.NetParameters == null)
                 throw new ArgumentException("You need net parameters to create the net!");
-            if (appendLabelsLayer != PresetValue.undefined && appendLabelsLayer != PresetValue.append)
-                throw new ArgumentException($"Parameter {appendLabelsLayer} is not valid here. Use {PresetValue.append} or no parameter.");
 
-            if (appendLabelsLayer == PresetValue.append)
+            if (appendLabelsLayer)
             {
                 if (SampleSet == null || SampleSet.TrainSet == null || SampleSet.TestSet == null)
                 {
