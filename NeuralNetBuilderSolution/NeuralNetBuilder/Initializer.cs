@@ -104,6 +104,9 @@ namespace NeuralNetBuilder
             if (sampleSet == null)
                 throw new ArgumentException("\nYou need a sample set to start training!");
 
+            if (shuffle)
+                await sampleSet.TrainSet.ShuffleAsync();
+
             try
             {
                 OnInitializerStatusChanged($"\n            Training, please wait...\n");
