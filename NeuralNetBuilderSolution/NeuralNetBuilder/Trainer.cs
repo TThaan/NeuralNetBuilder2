@@ -1,12 +1,13 @@
 ﻿using CustomLogger;
 using DeepLearningDataProvider;
-using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using MatrixExtensions;
 using NeuralNetBuilder.FactoriesAndParameters;
-using Microsoft.ML;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace NeuralNetBuilder
 {
@@ -40,10 +41,12 @@ namespace NeuralNetBuilder
         ILearningNet learningNet;
         INet originalNet, trainedNet;
         ISampleSet _sampleSet;
+        IEnumerable<IGrouping<string, Sample>> groupedSamples;  // in SampleSet?
         int samplesTotal, epochs, currentEpoch = 0, currentSample = 0;
         float learningRate, learningRateChange, lastEpochsAccuracy, currentTotalCost;
         TrainerStatus trainerStatus;
         string message;
+        Random rnd;
 
         #endregion
 
@@ -210,7 +213,7 @@ namespace NeuralNetBuilder
             }
         }
 
-        public async Task Train(INet net, ISampleSet sampleSet, bool shuffleSamplesBeforeTraining, string logName) // Better as internal? Only allow access for clients via initializer?
+        public async Task Train(INet net, ISampleSet sampleSet, bool shuffleSamplesBeforeTraining, string logName)
         {
             if (shuffleSamplesBeforeTraining)
             {
@@ -223,6 +226,10 @@ namespace NeuralNetBuilder
                 $"{typeof(Trainer)}.{nameof(Train)}: Parameter {nameof(net)}.");
             SampleSet = sampleSet ?? throw new NullReferenceException(
                 $"{typeof(Trainer)}.{nameof(Train)}: Parameter {nameof(sampleSet)}.");
+
+            groupedSamples = _sampleSet.TrainSet.GroupBy(x => x.Label);
+            Dictionary<string, List<int>> groupedAndRandomizedIndeces = groupedSamples
+                .ToDictionary(group => group.Key, group => Enumerable.Range(0, group.Count()).Shuffle().ToList());    //.Select(x => (int?)x)
 
             LearningNet = NetFactory.GetLearningNet(net, _parameters.CostType); // CostType as Trainer prop?
 
@@ -267,21 +274,69 @@ namespace NeuralNetBuilder
             TrainerStatus = TrainerStatus.Finished;
             Message = "Training Finished";
         }
+
         public async Task TestAsync(Sample[] testSet, ILogger logger)
         {
             await Task.Run(async () =>
             {
-                int correct = 0, wrong = 0;
+                int setLength = testSet.Length, correct = 0, wrong = 0, N = SampleSet.TrainSet.Length / 2;
+
+                Dictionary<string, int> evaluatedSamples = new Dictionary<string, int>();
+                foreach (var label in SampleSet.Targets.Keys)
+                    evaluatedSamples[label] = 0;
 
                 for (int i = 0;  i < testSet.Length; i++)
                 {
-                    await LearningNet.FeedForwardAsync(testSet[i].Features);
-                    bool isOutputCorrect = TestSingleSample(testSet[i]);
-                    LastEpochsAccuracy = isOutputCorrect
-                    ? (float)++correct / (correct + wrong)
-                    : (float)correct / (correct + ++wrong);
+                    Sample sample = testSet[i];
+                    await LearningNet.FeedForwardAsync(sample.Features);
+                    bool isOutputCorrect = TestSingleSample(sample);
 
+                    if(isOutputCorrect)
+                    {
+                        // evaluatedSamples[sample.Label] = (++correct, wrong, 0);
+                        //LastEpochsAccuracy = (float)++correct / (correct + wrong);  // Compute only once after full test?
+                    }
+                    else
+                    {
+                        evaluatedSamples[sample.Label] += 1;
+                        //LastEpochsAccuracy = (float)correct / (correct + ++wrong);  // Compute only once after full test?
+                    }
+
+                    LastEpochsAccuracy = (float)correct / (correct + wrong);
                     LogTesting(i, isOutputCorrect, correct, wrong, logger);
+                }
+
+                // "Injected set": Part of the next trainings set
+                // that consists only of samples whose labels were falsely predicted in the test. (length := N)
+                // The fractions of falsely predicted samples for each label will be aggregated. (sum of fractions := n = x [amount of wrong labels] * f [fraction])
+                // To raise the resulting sum n up to N divide N by n and multiply f separately for each wrong label.
+                // This way you get the amount of samples for each label to put into the injected set.
+
+                var groupedTrainSet = _sampleSet.TrainSet.GroupBy(x => x.Label).ToList();
+                //Array.Clear(_sampleSet.TrainSet, 0, _sampleSet.TrainSet.Length);
+
+                int n = 0;  // n = amount of falsely predicted samples
+
+                foreach (var item in evaluatedSamples)
+                {
+                    n += item.Value;
+                }                
+
+                decimal multiplyer = (decimal)N / n;
+                foreach (var item in evaluatedSamples)
+                {
+                    // Overwrite value (amount of occurrences in falsely predicted samples/labels) with new value (amount of occurences in injected set).
+                    evaluatedSamples[item.Key] = (int)(item.Value * multiplyer);
+                }
+
+                foreach (var item in evaluatedSamples)
+                {
+                    // item.Value = amount of occurences in injected set
+                    for (int i = 0; i < item.Value; i++)
+                    {
+                        //groupedTrainSet
+                    }
+
                 }
             });
         }
@@ -306,6 +361,10 @@ namespace NeuralNetBuilder
 
         #region helpers
 
+        private int GetLengthOfPrecedingGroup(IEnumerable<IGrouping<string, Sample>> groupedSamples, string key)
+        {
+            return groupedSamples.TakeWhile(x => x.Key != key).LastOrDefault().Count();
+        }
         private async Task FinalizeEpoch(ILogger logger)
         {
             TrainedNet = LearningNet.GetNet();
@@ -442,10 +501,13 @@ namespace NeuralNetBuilder
             {
                 if (disposing)
                 {
-                    // Free managed resources if Dispose(true) has been called.
+                    // Free managed resources.
+
                     
                 }
                 // Free unmanaged resources.
+
+
                 isDisposed = true;
             }
         }

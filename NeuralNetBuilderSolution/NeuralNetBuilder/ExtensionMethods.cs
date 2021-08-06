@@ -8,6 +8,12 @@ namespace NeuralNetBuilder
 {
     public static class ExtensionMethods
     {
+        #region fields
+
+        static Random rnd = RandomProvider.GetThreadRandom();
+
+        #endregion
+
         /// <summary>
         /// Cast a generic IEnumerable to a string. 
         /// Optionally set a separator and a line break each or every n-th item (0 = no line break).
@@ -58,30 +64,63 @@ namespace NeuralNetBuilder
 
             return result;
         }
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> collection)
+        {
+            T[] result = collection.ToArray();
+            int count = collection.Count();
+
+            for (int index = 0; index < count; index++)
+            {
+                int newIndex = rnd.Next(count);
+
+                // Exchange arr[n] with arr[k]
+
+                T item = result[index];
+                result[index] = result[newIndex];
+                result[newIndex] = item;
+            }
+
+            return result;
+        }
         public static async Task<IEnumerable<T>> ShuffleAsync<T>(this IEnumerable<T> collection)
+        {
+            return await Task.Run(() => collection.Shuffle());
+        }
+        public static async Task<T> GetRandomItemAndRemoveIt<T>(this List<T> list)   where T : class
         {
             return await Task.Run(() =>
             {
-                Random rnd = new Random();
+                T result = null;
 
-                T[] result = collection.ToArray();
-                int count = collection.Count();
+                // Get next item at or after random index
 
-                for (int index = 0; index < count; index++)
+                int rndIndex = rnd.Next(list.Count);
+                for (int i = rndIndex; i < list.Count; i++)
                 {
-                    int newIndex = rnd.Next(count);
+                    if (list[i] != null)
+                    {
+                        result = list[i];
+                        list.RemoveAt(i);
+                    }
+                }
 
-                    // Exchange arr[n] with arr[k]
-
-                    T item = result[index];
-                    result[index] = result[newIndex];
-                    result[newIndex] = item;
+                // if there is no item at or after random index get the first existing item in the list
+                if (result == null)
+                {
+                    for (int i = 0; i < rndIndex; i++)
+                    {
+                        if (list[i] != null)
+                        {
+                            result = list[i];
+                            list.RemoveAt(i);
+                        }
+                    }
                 }
 
                 return result;
             });
-        }
-
+        }        
+        // Rename GetMaxValue!
         public static T GetMaximum<T>(this IEnumerable<T> collection)
         {
             return collection.OrderByDescending(x => x).First();
