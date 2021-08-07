@@ -27,7 +27,7 @@ namespace NeuralNetBuilder
         float CurrentTotalCost { get; set; }        
         TrainerStatus TrainerStatus { get; set; }
         public string Message { get; set; }
-        Task Train(INet net, ISampleSet sampleSet, bool shuffleSamplesBeforeTraining, string logName);
+        Task Train(bool shuffleSamplesBeforeTraining, string logName);
         Task TestAsync(Sample[] testingSamples, ILogger logger = default);
         Task Reset();
         event TrainerStatusChangedEventHandler TrainerStatusChanged;
@@ -40,8 +40,12 @@ namespace NeuralNetBuilder
         private readonly ITrainerParameters _parameters;
         ILearningNet learningNet;
         INet originalNet, trainedNet;
+
         ISampleSet _sampleSet;
+        List<Sample> arrangedTrainSet = new List<Sample>();  // in SampleSet?
         IEnumerable<IGrouping<string, Sample>> groupedSamples;  // in SampleSet?
+        Dictionary<string, NullableIntArray> groupedAndRandomizedIndeces, multipliedGroupedAndRandomizedIndeces;
+
         int samplesTotal, epochs, currentEpoch = 0, currentSample = 0;
         float learningRate, learningRateChange, lastEpochsAccuracy, currentTotalCost;
         TrainerStatus trainerStatus;
@@ -213,27 +217,10 @@ namespace NeuralNetBuilder
             }
         }
 
-        public async Task Train(INet net, ISampleSet sampleSet, bool shuffleSamplesBeforeTraining, string logName)
+        public async Task Train(bool shuffleSamplesBeforeTraining, string logName)
         {
-            if (shuffleSamplesBeforeTraining)
-            {
-                await sampleSet.TrainSet.ShuffleAsync();
-            }
-
-            // Use Event, don't throw exception here!?
-            // ta: net and sample set cannot be null since this is checked in initializer!
-            OriginalNet = net.GetCopy() ?? throw new NullReferenceException(
-                $"{typeof(Trainer)}.{nameof(Train)}: Parameter {nameof(net)}.");
-            SampleSet = sampleSet ?? throw new NullReferenceException(
-                $"{typeof(Trainer)}.{nameof(Train)}: Parameter {nameof(sampleSet)}.");
-
-            groupedSamples = _sampleSet.TrainSet.GroupBy(x => x.Label);
-            Dictionary<string, List<int>> groupedAndRandomizedIndeces = groupedSamples
-                .ToDictionary(group => group.Key, group => Enumerable.Range(0, group.Count()).Shuffle().ToList());    //.Select(x => (int?)x)
-
-            LearningNet = NetFactory.GetLearningNet(net, _parameters.CostType); // CostType as Trainer prop?
-
-            SamplesTotal = sampleSet.TrainSet.Length;
+            await ArrangeSamplesAsync(shuffleSamplesBeforeTraining);
+            LearningNet = NetFactory.GetLearningNet(originalNet, _parameters.CostType); // CostType as Trainer prop?
             TrainerStatus = TrainerStatus.Running;
             Message = "Training";
 
@@ -247,10 +234,10 @@ namespace NeuralNetBuilder
                 {
                     for (currentSample = CurrentSample; currentSample < samplesTotal; CurrentSample++)
                     {
-                        await learningNet.FeedForwardAsync(sampleSet.TrainSet[currentSample].Features);
+                        await learningNet.FeedForwardAsync(_sampleSet.TrainSet[currentSample].Features);
                         LogFeedForward(currentSample, logger);
 
-                        await learningNet.PropagateBackAsync(sampleSet.Targets[sampleSet.TrainSet[currentSample].Label]);
+                        await learningNet.PropagateBackAsync(_sampleSet.Targets[_sampleSet.TrainSet[currentSample].Label]);
                         CurrentTotalCost = learningNet.CurrentTotalCost;
                         LogBackProp(currentSample, logger);
 
@@ -281,9 +268,9 @@ namespace NeuralNetBuilder
             {
                 int setLength = testSet.Length, correct = 0, wrong = 0, N = SampleSet.TrainSet.Length / 2;
 
-                Dictionary<string, int> evaluatedSamples = new Dictionary<string, int>();
+                Dictionary<string, int> unrecognizedSamplesPerLabel = new Dictionary<string, int>();
                 foreach (var label in SampleSet.Targets.Keys)
-                    evaluatedSamples[label] = 0;
+                    unrecognizedSamplesPerLabel[label] = 0;
 
                 for (int i = 0;  i < testSet.Length; i++)
                 {
@@ -298,7 +285,7 @@ namespace NeuralNetBuilder
                     }
                     else
                     {
-                        evaluatedSamples[sample.Label] += 1;
+                        unrecognizedSamplesPerLabel[sample.Label] += 1;
                         //LastEpochsAccuracy = (float)correct / (correct + ++wrong);  // Compute only once after full test?
                     }
 
@@ -312,35 +299,37 @@ namespace NeuralNetBuilder
                 // To raise the resulting sum n up to N divide N by n and multiply f separately for each wrong label.
                 // This way you get the amount of samples for each label to put into the injected set.
 
-                var groupedTrainSet = _sampleSet.TrainSet.GroupBy(x => x.Label).ToList();
+                //var groupedTrainSet = _sampleSet.TrainSet.GroupBy(x => x.Label).ToList();
                 //Array.Clear(_sampleSet.TrainSet, 0, _sampleSet.TrainSet.Length);
 
-                int n = 0;  // n = amount of falsely predicted samples
+                int totalUnrecognizedSamples = 0;  // n = amount of falsely predicted samples
 
-                foreach (var item in evaluatedSamples)
+                foreach (var item in unrecognizedSamplesPerLabel)
                 {
-                    n += item.Value;
+                    totalUnrecognizedSamples += item.Value;
                 }                
 
-                decimal multiplyer = (decimal)N / n;
-                foreach (var item in evaluatedSamples)
+                decimal multiplyer = (decimal)N / totalUnrecognizedSamples;
+                //Dictionary<string, NullableIntArray> labelMultiplyers = new Dictionary<string, NullableIntArray>();
+                foreach (var item in unrecognizedSamplesPerLabel)
                 {
                     // Overwrite value (amount of occurrences in falsely predicted samples/labels) with new value (amount of occurences in injected set).
-                    evaluatedSamples[item.Key] = (int)(item.Value * multiplyer);
+                    unrecognizedSamplesPerLabel[item.Key] = (int)(item.Value * multiplyer);
                 }
 
-                foreach (var item in evaluatedSamples)
-                {
-                    // item.Value = amount of occurences in injected set
-                    for (int i = 0; i < item.Value; i++)
-                    {
-                        //groupedTrainSet
-                    }
+                await ArrangeSamplesAsync(true, unrecognizedSamplesPerLabel);
 
-                }
+                //foreach (var item in unrecognizedSamplesPerLabel)
+                //{
+                //    // item.Value = amount of occurences in injected set
+                //    for (int i = 0; i < item.Value; i++)
+                //    {
+                //        //groupedTrainSet
+                //    }
+
+                //}
             });
         }
-
         public async Task Reset()
         {
             await Task.Run(() =>
@@ -361,9 +350,39 @@ namespace NeuralNetBuilder
 
         #region helpers
 
-        private int GetLengthOfPrecedingGroup(IEnumerable<IGrouping<string, Sample>> groupedSamples, string key)
+        private async Task ArrangeSamplesAsync(bool shuffleSamples, Dictionary<string, int> labelMultipliers = null)
         {
-            return groupedSamples.TakeWhile(x => x.Key != key).LastOrDefault().Count();
+            if (groupedSamples == null)
+            {
+                groupedSamples = _sampleSet.TrainSet.GroupBy(x => x.Label);
+            }
+
+            groupedAndRandomizedIndeces = groupedSamples
+                .ToDictionary(group => group.Key, group => new NullableIntArray(Enumerable.Cast<int?>(Enumerable.Range(0, group.Count()))));    //.Select(x => (int?)x)
+            await NewMethod(groupedAndRandomizedIndeces, shuffleSamples);
+
+            if (labelMultipliers != null)
+            {
+                multipliedGroupedAndRandomizedIndeces = groupedAndRandomizedIndeces
+                    .ToDictionary(kvp => kvp.Key, x => new NullableIntArray(x.Value, labelMultipliers[x.Key]));
+                await NewMethod(multipliedGroupedAndRandomizedIndeces, shuffleSamples);
+            }
+
+            SamplesTotal = arrangedTrainSet.Count;  // in SampleSet? // changes after injection (if not put in first if clause)?
+        }
+        private async Task NewMethod(Dictionary<string, NullableIntArray> dict, bool shuffleSamples)
+        {
+            if (shuffleSamples)
+                foreach (var group in dict)
+                    await group.Value.ShuffleAsync();
+
+            int lengthOfBiggestGroup = dict.Values.Max(x => x.Length);
+            for (int i = 0; i < lengthOfBiggestGroup; i++)
+            {
+                foreach (var group in dict)
+                    arrangedTrainSet.Add(groupedSamples.First(x => x.Key == group.Key).ElementAt((int)group.Value.NextItem));
+
+            }
         }
         private async Task FinalizeEpoch(ILogger logger)
         {

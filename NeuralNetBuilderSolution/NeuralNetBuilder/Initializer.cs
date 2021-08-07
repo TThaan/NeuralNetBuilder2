@@ -110,7 +110,7 @@ namespace NeuralNetBuilder
             try
             {
                 OnInitializerStatusChanged($"\n            Training, please wait...\n");
-                await Trainer.Train(Net, sampleSet, shuffle, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
+                await Trainer.Train(shuffle, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
                 TrainedNet = Trainer.TrainedNet?.GetCopy();
                 OnInitializerStatusChanged($"\n            Finished training.\n");
                 return true;
@@ -160,7 +160,7 @@ namespace NeuralNetBuilder
                 catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
             });
         }
-        public async Task<bool> CreateTrainerAsync(ISampleSet sampleSet)
+        public async Task<bool> CreateTrainerAsync()
         {
             if (ParameterBuilder.TrainerParameters == null)
             {
@@ -186,6 +186,8 @@ namespace NeuralNetBuilder
                 {
                     OnInitializerStatusChanged("Createing trainer, please wait...");
                     Trainer = new Trainer(ParameterBuilder.TrainerParameters);
+                    Trainer.OriginalNet = Net.GetCopy();
+                    Trainer.SampleSet = sampleSet;
                     OnInitializerStatusChanged("Successfully created trainer.");
                     return true;
                 }
