@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace NeuralNetBuilder
@@ -11,9 +12,10 @@ namespace NeuralNetBuilder
 
         int?[] content;
         // int[] freqOfUsage;   // 0 = never used, 1 = accessed once etc
-        int current;
+        int currentIndex;
         Random rnd;
         //T lastItem;
+        int length;
 
         public NullableIntArray()
         {
@@ -22,7 +24,7 @@ namespace NeuralNetBuilder
             //    throw new ArgumentException($" {typeof(T)} is not nullable. The generic type T must be nullable to be used with {nameof(CustomArrayForNullableInt<T>)}");
 
             rnd = RandomProvider.GetThreadRandom();
-            current = 0;
+            currentIndex = 0;
         }
         public NullableIntArray(int capacity)
             : base()
@@ -32,35 +34,71 @@ namespace NeuralNetBuilder
         public NullableIntArray(int?[] arr, decimal multiplier = 1)
             : base()
         {
-            // var unmultipliedArray = new NullableIntArray(arr); 
-            content = new int?[(int)(arr.Length * multiplier)];
-            int arrLength = arr.Length;
-            int x = 0;
-
-            for (int i = 0; i < Math.Truncate(multiplier); i++)
-            {
-                x = i * arrLength;
-
-                for (int k = 0; k <= arrLength; k++)
-                {
-                    content[x + k] = arr[k];
-                }
-            }
-
-            int fraction = (int)(multiplier - Math.Truncate(multiplier) * 10);
-
-            for (int i = 0; i < Math.Truncate(multiplier); i++)
-            {
-                content[x + i] = arr[i];
-            }
-
-            //arr.CopyTo(content, 0);
+            MultiplyContent(arr, multiplier);
         }
         public NullableIntArray(IEnumerable<int?> collection, decimal multiplier = 1)
             : base()
         {
-            content = collection.ToArray();
+            MultiplyContent(collection, multiplier);
         }
+        public NullableIntArray(IEnumerable<int?> collection, int replicatedSamples)
+            : base()
+        {
+            ReplicateContent(collection, replicatedSamples);
+        }
+
+        #region helpers
+
+        private void CreateContent(IEnumerable<int?> collection, decimal multiplier = 1)
+        {
+            length = collection.Count();
+
+            if (collection == null || multiplier == 0)
+            { 
+                content = new int?[0];
+                return;
+            }
+            else 
+            {
+                MultiplyContent(collection, multiplier);
+            }
+        }
+        private void ReplicateContent(IEnumerable<int?> collection, int replicatedSamples, bool shuffleReplicatedCollection = false)
+        {
+            int origLength = collection.Count();
+            length = replicatedSamples + origLength;
+            int sourceIndex = 0;
+
+            content = new int?[length];
+
+            for (int i = 0; i < length; i++)
+            {
+                if (i != 0 && i % origLength == 0)
+                {
+                    sourceIndex = 0;
+                    // collection.Shuffle();
+                }
+                content[currentIndex++] = collection.ElementAt(sourceIndex++);
+            }
+        }
+        private void MultiplyContent(IEnumerable<int?> collection, decimal multiplier)
+        {
+            // wa Shuffle ?
+            int origLength = collection.Count();
+            length = (int)(multiplier * origLength);
+            int sourceIndex = 0;
+
+            content = new int?[length];
+
+            for (int i = 0; i < length; i++)
+            {
+                if (i == origLength)
+                    sourceIndex = 0;
+                content[currentIndex++] = collection.ElementAt(sourceIndex++);
+            }
+        }
+
+        #endregion
 
         #endregion
 
@@ -73,48 +111,49 @@ namespace NeuralNetBuilder
         public int Length => content.Length;
         public int CurrentIndex
         {
-            get => current;
-            set => current = value;
+            get => currentIndex;
+            set => currentIndex = value;
         }
-        public int? CurrentItem => this[current];
+        public int? CurrentItem => this[currentIndex];
         public int? NextItem
         {
             get
             {
                 try
                 {
-                    return this[++current];
+                    return this[++currentIndex];
                 }
-                catch (Exception e)
+                catch (IndexOutOfRangeException)
                 {
-                    current = 0;
-                    return this[current];
+                    Debug.WriteLine("Handled!");
+                    currentIndex = 0;
+                    return this[currentIndex];
                 }
             }
         }
 
         public int? GetNextItemAndSetItNull()
         {
-            int? result = this[++current];
-            SetNullAt(current);
+            int? result = this[++currentIndex];
+            SetNullAt(currentIndex);
             return result;
         }
         public int? GetRandomItem()
         {
             int rndIndex = rnd.Next(Length);
-            current = rndIndex;
-            return this[current];
+            currentIndex = rndIndex;
+            return this[currentIndex];
         }
         public int? GetRandomItemAndSetItNull()
         {
             int? result = GetRandomItem();
-            SetNullAt(current);
+            SetNullAt(currentIndex);
             return result;
         }
         public void SetNullAt(int index)
         {
             content[index] = null;
-            current = index;
+            currentIndex = index;
         }
         public void SetNullAll()
         {
@@ -130,8 +169,14 @@ namespace NeuralNetBuilder
 
         #region IEnumerable<int?>
 
-        public IEnumerator<int?> GetEnumerator() => (IEnumerator<int?>)content.GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => content.GetEnumerator();
+        public IEnumerator<int?> GetEnumerator()
+        {
+            foreach (int? item in content)
+            {
+                yield return item;
+            }
+        }
+    IEnumerator IEnumerable.GetEnumerator() => content.GetEnumerator();
 
         #endregion
     }

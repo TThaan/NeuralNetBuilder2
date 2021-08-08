@@ -110,7 +110,7 @@ namespace NeuralNetBuilder
             try
             {
                 OnInitializerStatusChanged($"\n            Training, please wait...\n");
-                await Trainer.Train(shuffle, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
+                await Trainer.TrainAsync(shuffle, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
                 TrainedNet = Trainer.TrainedNet?.GetCopy();
                 OnInitializerStatusChanged($"\n            Finished training.\n");
                 return true;

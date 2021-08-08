@@ -27,7 +27,7 @@ namespace NeuralNetBuilder
         float CurrentTotalCost { get; set; }        
         TrainerStatus TrainerStatus { get; set; }
         public string Message { get; set; }
-        Task Train(bool shuffleSamplesBeforeTraining, string logName);
+        Task TrainAsync(bool shuffleSamplesBeforeTraining, string logName);
         Task TestAsync(Sample[] testingSamples, ILogger logger = default);
         Task Reset();
         event TrainerStatusChangedEventHandler TrainerStatusChanged;
@@ -45,6 +45,7 @@ namespace NeuralNetBuilder
         List<Sample> arrangedTrainSet = new List<Sample>();  // in SampleSet?
         IEnumerable<IGrouping<string, Sample>> groupedSamples;  // in SampleSet?
         Dictionary<string, NullableIntArray> groupedAndRandomizedIndeces, multipliedGroupedAndRandomizedIndeces;
+        Dictionary<string, int> appendedSamplesPerLabel = new Dictionary<string, int>();
 
         int samplesTotal, epochs, currentEpoch = 0, currentSample = 0;
         float learningRate, learningRateChange, lastEpochsAccuracy, currentTotalCost;
@@ -217,9 +218,8 @@ namespace NeuralNetBuilder
             }
         }
 
-        public async Task Train(bool shuffleSamplesBeforeTraining, string logName)
+        public async Task TrainAsync(bool shuffleSamplesBeforeTraining, string logName)
         {
-            await ArrangeSamplesAsync(shuffleSamplesBeforeTraining);
             LearningNet = NetFactory.GetLearningNet(originalNet, _parameters.CostType); // CostType as Trainer prop?
             TrainerStatus = TrainerStatus.Running;
             Message = "Training";
@@ -232,12 +232,14 @@ namespace NeuralNetBuilder
 
                 for (currentEpoch = CurrentEpoch; currentEpoch < Epochs; CurrentEpoch++)
                 {
+                    await ArrangeSamplesAsync(shuffleSamplesBeforeTraining);    // Better at start of epochs loop (and remove from TestASync end)!?
+                    
                     for (currentSample = CurrentSample; currentSample < samplesTotal; CurrentSample++)
                     {
-                        await learningNet.FeedForwardAsync(_sampleSet.TrainSet[currentSample].Features);
+                        await learningNet.FeedForwardAsync(arrangedTrainSet[currentSample].Features);   // _sampleSet.TrainSet
                         LogFeedForward(currentSample, logger);
 
-                        await learningNet.PropagateBackAsync(_sampleSet.Targets[_sampleSet.TrainSet[currentSample].Label]);
+                        await learningNet.PropagateBackAsync(_sampleSet.Targets[arrangedTrainSet[currentSample].Label]);    // _sampleSet.TrainSet
                         CurrentTotalCost = learningNet.CurrentTotalCost;
                         LogBackProp(currentSample, logger);
 
@@ -262,11 +264,28 @@ namespace NeuralNetBuilder
             Message = "Training Finished";
         }
 
+        private async Task FinalizeEpoch(ILogger logger)
+        {
+            TrainedNet = LearningNet.GetNet();
+
+            if (currentSample == SamplesTotal)
+            {
+                LearningRate *= LearningRateChange;
+                await TestAsync(_sampleSet.TestSet, logger);
+                currentSample = 0;
+                await _sampleSet.TrainSet.ShuffleAsync();
+            }
+
+            if (TrainerStatus != TrainerStatus.Paused)
+                OnTrainerStatusChanged($"Epoch {currentEpoch} finished. (Accuracy: {lastEpochsAccuracy})");
+        }
         public async Task TestAsync(Sample[] testSet, ILogger logger)
         {
             await Task.Run(async () =>
             {
-                int setLength = testSet.Length, correct = 0, wrong = 0, N = SampleSet.TrainSet.Length / 2;
+                decimal injSetFraction = .5m;   // make dynamic
+                int setLength = testSet.Length;
+                int totalUnrecognizedSamples = 0;
 
                 Dictionary<string, int> unrecognizedSamplesPerLabel = new Dictionary<string, int>();
                 foreach (var label in SampleSet.Targets.Keys)
@@ -275,60 +294,35 @@ namespace NeuralNetBuilder
                 for (int i = 0;  i < testSet.Length; i++)
                 {
                     Sample sample = testSet[i];
-                    await LearningNet.FeedForwardAsync(sample.Features);
-                    bool isOutputCorrect = TestSingleSample(sample);
+                    await LearningNet.FeedForwardAsync(sample.Features);                    
+                    bool isOutputCorrect = CheckPredictionOfSingleSample(sample, out string predictedLabel);
 
-                    if(isOutputCorrect)
-                    {
-                        // evaluatedSamples[sample.Label] = (++correct, wrong, 0);
-                        //LastEpochsAccuracy = (float)++correct / (correct + wrong);  // Compute only once after full test?
-                    }
-                    else
+                    if(!isOutputCorrect)
                     {
                         unrecognizedSamplesPerLabel[sample.Label] += 1;
-                        //LastEpochsAccuracy = (float)correct / (correct + ++wrong);  // Compute only once after full test?
+                        totalUnrecognizedSamples++;
                     }
 
-                    LastEpochsAccuracy = (float)correct / (correct + wrong);
-                    LogTesting(i, isOutputCorrect, correct, wrong, logger);
+                    LogTesting(i, isOutputCorrect, predictedLabel, logger);
                 }
 
-                // "Injected set": Part of the next trainings set
-                // that consists only of samples whose labels were falsely predicted in the test. (length := N)
-                // The fractions of falsely predicted samples for each label will be aggregated. (sum of fractions := n = x [amount of wrong labels] * f [fraction])
-                // To raise the resulting sum n up to N divide N by n and multiply f separately for each wrong label.
-                // This way you get the amount of samples for each label to put into the injected set.
-
-                //var groupedTrainSet = _sampleSet.TrainSet.GroupBy(x => x.Label).ToList();
-                //Array.Clear(_sampleSet.TrainSet, 0, _sampleSet.TrainSet.Length);
-
-                int totalUnrecognizedSamples = 0;  // n = amount of falsely predicted samples
+                LastEpochsAccuracy = (float)(setLength - totalUnrecognizedSamples) / setLength;
 
                 foreach (var item in unrecognizedSamplesPerLabel)
                 {
-                    totalUnrecognizedSamples += item.Value;
-                }                
-
-                decimal multiplyer = (decimal)N / totalUnrecognizedSamples;
-                //Dictionary<string, NullableIntArray> labelMultiplyers = new Dictionary<string, NullableIntArray>();
-                foreach (var item in unrecognizedSamplesPerLabel)
-                {
-                    // Overwrite value (amount of occurrences in falsely predicted samples/labels) with new value (amount of occurences in injected set).
-                    unrecognizedSamplesPerLabel[item.Key] = (int)(item.Value * multiplyer);
+                    decimal fractionOfAllUnrecognizedSamples = totalUnrecognizedSamples == 0
+                    ? 0
+                    : item.Value / totalUnrecognizedSamples;
+                    appendedSamplesPerLabel[item.Key] = (int)(samplesTotal * injSetFraction * fractionOfAllUnrecognizedSamples);
                 }
-
-                await ArrangeSamplesAsync(true, unrecognizedSamplesPerLabel);
-
-                //foreach (var item in unrecognizedSamplesPerLabel)
-                //{
-                //    // item.Value = amount of occurences in injected set
-                //    for (int i = 0; i < item.Value; i++)
-                //    {
-                //        //groupedTrainSet
-                //    }
-
-                //}
             });
+        }
+        public bool CheckPredictionOfSingleSample(Sample sample, out string prediction)
+        {
+            int targetHotIndex = Array.IndexOf(SampleSet.Targets[sample.Label], 1);
+            int predictedHotIndex = Array.IndexOf(LearningNet.Output, LearningNet.Output.GetMaximum());
+            prediction = SampleSet.Targets.First(x => x.Value[predictedHotIndex] == 1).Key;
+            return targetHotIndex == predictedHotIndex;
         }
         public async Task Reset()
         {
@@ -350,60 +344,52 @@ namespace NeuralNetBuilder
 
         #region helpers
 
-        private async Task ArrangeSamplesAsync(bool shuffleSamples, Dictionary<string, int> labelMultipliers = null)
+        private async Task ArrangeSamplesAsync(bool shuffleSamples, bool equalizeGroupSizes = true)
         {
-            if (groupedSamples == null)
+            await Task.Run(() =>
             {
-                groupedSamples = _sampleSet.TrainSet.GroupBy(x => x.Label);
-            }
+                if (groupedSamples == null)
+                    groupedSamples = _sampleSet.TrainSet.GroupBy(x => x.Label);
 
-            groupedAndRandomizedIndeces = groupedSamples
-                .ToDictionary(group => group.Key, group => new NullableIntArray(Enumerable.Cast<int?>(Enumerable.Range(0, group.Count()))));    //.Select(x => (int?)x)
-            await NewMethod(groupedAndRandomizedIndeces, shuffleSamples);
+                groupedAndRandomizedIndeces = groupedSamples
+                    .ToDictionary(group => group.Key, group => new NullableIntArray(
+                        GetRandomIndeces(group, equalizeGroupSizes),
+                        appendedSamplesPerLabel.Keys.Contains(group.Key) ? appendedSamplesPerLabel[group.Key] : 0));
+                SetArrangedTrainSet(groupedAndRandomizedIndeces);
 
-            if (labelMultipliers != null)
-            {
-                multipliedGroupedAndRandomizedIndeces = groupedAndRandomizedIndeces
-                    .ToDictionary(kvp => kvp.Key, x => new NullableIntArray(x.Value, labelMultipliers[x.Key]));
-                await NewMethod(multipliedGroupedAndRandomizedIndeces, shuffleSamples);
-            }
-
-            SamplesTotal = arrangedTrainSet.Count;  // in SampleSet? // changes after injection (if not put in first if clause)?
+                SamplesTotal = arrangedTrainSet.Count;  // in SampleSet? // changes after injection (if not put in first if clause)?
+            });
         }
-        private async Task NewMethod(Dictionary<string, NullableIntArray> dict, bool shuffleSamples)
+        private IEnumerable<int?> GetRandomIndeces(IGrouping<string, Sample> group, bool equalizeGroupSizes)
         {
-            if (shuffleSamples)
-                foreach (var group in dict)
-                    await group.Value.ShuffleAsync();
+            int minGroupLength = groupedSamples.Min(x => x.Count()),
+                groupLength = group.Count(),
+                intendedGroupLength = equalizeGroupSizes ? minGroupLength : groupLength;
+
+            var result = Enumerable.Cast<int?>(
+                Enumerable.Range(0, groupLength))
+                .Shuffle()
+                .Take(intendedGroupLength);
+
+            return result;
+        }
+        private void SetArrangedTrainSet(Dictionary<string, NullableIntArray> dict)   // , bool shuffleSamples
+        {
+            arrangedTrainSet.Clear();
 
             int lengthOfBiggestGroup = dict.Values.Max(x => x.Length);
+
             for (int i = 0; i < lengthOfBiggestGroup; i++)
             {
                 foreach (var group in dict)
-                    arrangedTrainSet.Add(groupedSamples.First(x => x.Key == group.Key).ElementAt((int)group.Value.NextItem));
-
+                {
+                    if (i == group.Value.Length)
+                        dict.Remove(group.Key);
+                    else
+                        // arrangedTrainSet of indeces only??
+                        arrangedTrainSet.Add(groupedSamples.First(x => x.Key == group.Key).ElementAt((int)group.Value.NextItem));
+                }
             }
-        }
-        private async Task FinalizeEpoch(ILogger logger)
-        {
-            TrainedNet = LearningNet.GetNet();
-
-            if(TrainerStatus != TrainerStatus.Paused)
-                OnTrainerStatusChanged($"Epoch {currentEpoch} finished. (Accuracy: {lastEpochsAccuracy})");
-
-            if (currentSample == SamplesTotal)
-            {
-                LearningRate *= LearningRateChange;
-                await TestAsync(_sampleSet.TestSet, logger);
-                currentSample = 0;
-                await _sampleSet.TrainSet.ShuffleAsync();
-            }
-        }
-        private bool TestSingleSample(Sample sample)
-        {
-            int targetHotIndex = Array.IndexOf(SampleSet.Targets[sample.Label], 1);
-            int actualHotIndex = Array.IndexOf(LearningNet.Output, LearningNet.Output.GetMaximum());
-            return targetHotIndex == actualHotIndex;
         }
 
         #endregion
@@ -462,7 +448,7 @@ namespace NeuralNetBuilder
                 if (layer.Biases != null) logger?.Log(layer.Biases.ToLog(nameof(layer.Biases)));
             }
         }
-        private void LogTesting(int sampleNr, bool isOutputCorrect, int correct, int wrong, ILogger logger)
+        private void LogTesting(int sampleNr, bool isOutputCorrect, string predictedLabel, ILogger logger)
         {
             if (logger == null) return;
 
@@ -471,18 +457,16 @@ namespace NeuralNetBuilder
                 logger?.Log("\n                        * * * T E S T I N G * * *\n\n");
             }
 
+            logger?.Log($"Label     : {_sampleSet.TestSet[sampleNr].Label}");
+            logger?.Log($"\nPrediction: {_sampleSet.TestSet[sampleNr].Label}");
+            logger?.Log($"\nTestResult: {(isOutputCorrect ? "Correct" : "Wrong")}\n\n");
             logger?.Log(_sampleSet.TestSet[sampleNr].Features.ToLog("Features"));
-            logger?.Log($"Label: {_sampleSet.TestSet[sampleNr].Label}");
             logger?.Log(_sampleSet.Targets[_sampleSet.TestSet[sampleNr].Label].ToLog("\nTarget"));
-            // Task: Show guessed label!
             logger?.Log(learningNet.Output.ToLog(nameof(learningNet.Output)));
             // Task: Show value ('probability')!
-            logger?.Log($"\nTestResult: {(isOutputCorrect ? "Correct" : "Wrong")}\n\n");
 
             if (sampleNr == _sampleSet.TestSet.Length - 1)
-            {
-                logger?.Log($"CurrentAccuracy: {(float)correct / (correct + wrong)})\n\n");
-            }
+                logger?.Log($"CurrentAccuracy: {LastEpochsAccuracy})\n\n");
         }
 
         #endregion
