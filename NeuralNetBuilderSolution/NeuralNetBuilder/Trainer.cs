@@ -1,5 +1,6 @@
 ﻿using CustomLogger;
 using DeepLearningDataProvider;
+using DeepLearningDataProvider.SampleSetExtensionMethods;
 using MatrixExtensions;
 using NeuralNetBuilder.FactoriesAndParameters;
 using System;
@@ -40,18 +41,14 @@ namespace NeuralNetBuilder
         private readonly ITrainerParameters _parameters;
         ILearningNet learningNet;
         INet originalNet, trainedNet;
-
         ISampleSet _sampleSet;
-        List<Sample> arrangedTrainSet = new List<Sample>();  // in SampleSet?
-        IEnumerable<IGrouping<string, Sample>> groupedSamples;  // in SampleSet?
-        Dictionary<string, NullableIntArray> groupedAndRandomizedIndeces, multipliedGroupedAndRandomizedIndeces;
-        Dictionary<string, int> appendedSamplesPerLabel = new Dictionary<string, int>();
 
-        int samplesTotal, epochs, currentEpoch = 0, currentSample = 0;
-        float learningRate, learningRateChange, lastEpochsAccuracy, currentTotalCost;
+        Dictionary<string, int> lastTestResult = new Dictionary<string, int>();
+        int samplesTotal, currentEpoch = 0, currentSample = 0;
+        float currentLearningRate, lastEpochsAccuracy, currentTotalCost;
         TrainerStatus trainerStatus;
         string message;
-        Random rnd;
+        // Random rnd;
 
         #endregion
 
@@ -157,12 +154,12 @@ namespace NeuralNetBuilder
         }
         public float LearningRate
         {
-            get { return learningRateChange; }
+            get { return currentLearningRate; }
             set
             {
-                if (learningRateChange != value)
+                if (currentLearningRate != value)
                 {
-                    learningRateChange = value;
+                    currentLearningRate = value;
                     OnPropertyChanged();
                 }
             }
@@ -232,14 +229,15 @@ namespace NeuralNetBuilder
 
                 for (currentEpoch = CurrentEpoch; currentEpoch < Epochs; CurrentEpoch++)
                 {
-                    await ArrangeSamplesAsync(shuffleSamplesBeforeTraining);    // Better at start of epochs loop (and remove from TestASync end)!?
-                    
+                    await _sampleSet.ArrangeSamplesAsync(shuffleSamplesBeforeTraining, lastTestResult);
+                    samplesTotal = _sampleSet.ArrangedTrainSet.Count;
+
                     for (currentSample = CurrentSample; currentSample < samplesTotal; CurrentSample++)
                     {
-                        await learningNet.FeedForwardAsync(arrangedTrainSet[currentSample].Features);   // _sampleSet.TrainSet
+                        await learningNet.FeedForwardAsync(_sampleSet.ArrangedTrainSet[currentSample].Features);   // _sampleSet.TrainSet
                         LogFeedForward(currentSample, logger);
 
-                        await learningNet.PropagateBackAsync(_sampleSet.Targets[arrangedTrainSet[currentSample].Label]);    // _sampleSet.TrainSet
+                        await learningNet.PropagateBackAsync(_sampleSet.Targets[_sampleSet.ArrangedTrainSet[currentSample].Label]);    // _sampleSet.TrainSet
                         CurrentTotalCost = learningNet.CurrentTotalCost;
                         LogBackProp(currentSample, logger);
 
@@ -283,23 +281,21 @@ namespace NeuralNetBuilder
         {
             await Task.Run(async () =>
             {
-                decimal injSetFraction = .5m;   // make dynamic
                 int setLength = testSet.Length;
                 int totalUnrecognizedSamples = 0;
 
-                Dictionary<string, int> unrecognizedSamplesPerLabel = new Dictionary<string, int>();
                 foreach (var label in SampleSet.Targets.Keys)
-                    unrecognizedSamplesPerLabel[label] = 0;
+                    lastTestResult[label] = 0;
 
-                for (int i = 0;  i < testSet.Length; i++)
+                for (int i = 0; i < testSet.Length; i++)
                 {
                     Sample sample = testSet[i];
-                    await LearningNet.FeedForwardAsync(sample.Features);                    
+                    await LearningNet.FeedForwardAsync(sample.Features);
                     bool isOutputCorrect = CheckPredictionOfSingleSample(sample, out string predictedLabel);
 
-                    if(!isOutputCorrect)
+                    if (!isOutputCorrect)
                     {
-                        unrecognizedSamplesPerLabel[sample.Label] += 1;
+                        lastTestResult[sample.Label] += 1;
                         totalUnrecognizedSamples++;
                     }
 
@@ -307,14 +303,6 @@ namespace NeuralNetBuilder
                 }
 
                 LastEpochsAccuracy = (float)(setLength - totalUnrecognizedSamples) / setLength;
-
-                foreach (var item in unrecognizedSamplesPerLabel)
-                {
-                    decimal fractionOfAllUnrecognizedSamples = totalUnrecognizedSamples == 0
-                    ? 0
-                    : item.Value / totalUnrecognizedSamples;
-                    appendedSamplesPerLabel[item.Key] = (int)(samplesTotal * injSetFraction * fractionOfAllUnrecognizedSamples);
-                }
             });
         }
         public bool CheckPredictionOfSingleSample(Sample sample, out string prediction)
@@ -341,58 +329,6 @@ namespace NeuralNetBuilder
                 TrainerStatus = TrainerStatus.Undefined;
             });
         }
-
-        #region helpers
-
-        private async Task ArrangeSamplesAsync(bool shuffleSamples, bool equalizeGroupSizes = true)
-        {
-            await Task.Run(() =>
-            {
-                if (groupedSamples == null)
-                    groupedSamples = _sampleSet.TrainSet.GroupBy(x => x.Label);
-
-                groupedAndRandomizedIndeces = groupedSamples
-                    .ToDictionary(group => group.Key, group => new NullableIntArray(
-                        GetRandomIndeces(group, equalizeGroupSizes),
-                        appendedSamplesPerLabel.Keys.Contains(group.Key) ? appendedSamplesPerLabel[group.Key] : 0));
-                SetArrangedTrainSet(groupedAndRandomizedIndeces);
-
-                SamplesTotal = arrangedTrainSet.Count;  // in SampleSet? // changes after injection (if not put in first if clause)?
-            });
-        }
-        private IEnumerable<int?> GetRandomIndeces(IGrouping<string, Sample> group, bool equalizeGroupSizes)
-        {
-            int minGroupLength = groupedSamples.Min(x => x.Count()),
-                groupLength = group.Count(),
-                intendedGroupLength = equalizeGroupSizes ? minGroupLength : groupLength;
-
-            var result = Enumerable.Cast<int?>(
-                Enumerable.Range(0, groupLength))
-                .Shuffle()
-                .Take(intendedGroupLength);
-
-            return result;
-        }
-        private void SetArrangedTrainSet(Dictionary<string, NullableIntArray> dict)   // , bool shuffleSamples
-        {
-            arrangedTrainSet.Clear();
-
-            int lengthOfBiggestGroup = dict.Values.Max(x => x.Length);
-
-            for (int i = 0; i < lengthOfBiggestGroup; i++)
-            {
-                foreach (var group in dict)
-                {
-                    if (i == group.Value.Length)
-                        dict.Remove(group.Key);
-                    else
-                        // arrangedTrainSet of indeces only??
-                        arrangedTrainSet.Add(groupedSamples.First(x => x.Key == group.Key).ElementAt((int)group.Value.NextItem));
-                }
-            }
-        }
-
-        #endregion
 
         #region Logging
 
