@@ -25,6 +25,10 @@ namespace NeuralNetBuilder
         {
             paths = new PathBuilder(OnInitializerStatusChanged);                        // via DC?
             parameterBuilder = new ParameterBuilder(paths, OnInitializerStatusChanged); // via DC?
+
+            // Define an uninitialized trainer to enable the client to register events when defining the initializer:
+            trainer = new Trainer();
+            // wa uninitialized net?
         }
 
         #endregion
@@ -90,6 +94,7 @@ namespace NeuralNetBuilder
             set { trainer = value; }
         }
         public bool IsLogged { get; set; }
+        public string LogName { get; set; } //?
 
         #endregion
 
@@ -185,7 +190,10 @@ namespace NeuralNetBuilder
                 try
                 {
                     OnInitializerStatusChanged("Createing trainer, please wait...");
-                    Trainer = new Trainer(ParameterBuilder.TrainerParameters);
+                    Trainer.Epochs = ParameterBuilder.TrainerParameters.Epochs;
+                    Trainer.LearningRate = ParameterBuilder.TrainerParameters.LearningRate;
+                    Trainer.LearningRateChange = ParameterBuilder.TrainerParameters.LearningRateChange;
+                    Trainer.CostType = ParameterBuilder.TrainerParameters.CostType;
                     Trainer.OriginalNet = Net.GetCopy();
                     Trainer.SampleSet = sampleSet;
                     OnInitializerStatusChanged("Successfully created trainer.");
@@ -272,6 +280,8 @@ namespace NeuralNetBuilder
             }
             catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
         }
+
+        // Set IsLogged and Logname ?
 
         #endregion
 

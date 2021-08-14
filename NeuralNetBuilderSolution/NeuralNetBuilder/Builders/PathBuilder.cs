@@ -3,6 +3,10 @@ using System.IO;
 
 namespace NeuralNetBuilder.Builders
 {
+    // Builders provide methods to interact with the data classes (all pocos?).
+    // You can access them from the ConsoleApi, AIDemoUI or use them as Wpf's 'Command-Executes'.
+    // They already do or will (soon) provide an event to notify about the (succeeded) data changes.
+
     public class PathBuilder
     {
         #region fields & ctor
