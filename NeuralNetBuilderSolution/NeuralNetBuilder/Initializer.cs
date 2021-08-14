@@ -24,11 +24,15 @@ namespace NeuralNetBuilder
         public Initializer()
         {
             paths = new PathBuilder(OnInitializerStatusChanged);                        // via DC?
-            parameterBuilder = new ParameterBuilder(paths, OnInitializerStatusChanged); // via DC?
+            parameterBuilder = new ParameterBuilder(OnInitializerStatusChanged); // via DC?
 
-            // Define an uninitialized trainer to enable the client to register events when defining the initializer:
-            trainer = new Trainer();
-            // wa uninitialized net?
+            // Define an uninitialized trainer to enable the client to register events when defining the initializer?
+            // Actually: 'OnInitializerStatusChanged(..)' is passed to al builders.
+            // So only initializer's event need be registered.
+            // But the UI shall have access to yet to be defined properties instead of throwing an exception due to a non existing class.
+            trainer = new Trainer();        // DI?
+            net = new Net();                // DI?
+            sampleSet = new SampleSet();    // DI?
         }
 
         #endregion
