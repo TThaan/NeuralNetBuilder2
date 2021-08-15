@@ -9,7 +9,7 @@ namespace NeuralNetBuilder
     {
         #region fields & ctor
 
-        private string _info;
+        private readonly string _info;
 
         public TrainerStatusChangedEventArgs(string info)
         {
@@ -20,10 +20,7 @@ namespace NeuralNetBuilder
 
         #region public
 
-        public string Info
-        {
-            get { return _info; }
-        }
+        public string Info => _info;
 
         #endregion
     }
@@ -31,7 +28,7 @@ namespace NeuralNetBuilder
     {
         #region fields & ctor
 
-        private string _info;
+        private readonly string _info;
 
         public InitializerStatusChangedEventArgs(string info)
         {
@@ -42,10 +39,7 @@ namespace NeuralNetBuilder
 
         #region public
 
-        public string Info
-        {
-            get { return _info; }
-        }
+        public string Info => _info;
 
         #endregion
     }

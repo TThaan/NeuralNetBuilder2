@@ -9,7 +9,9 @@ namespace NeuralNetBuilder.Builders
     // You can access them from the ConsoleApi, AIDemoUI or use them as Wpf's 'Command-Executes'.
     // They already do or will (soon) provide an event to notify about the (succeeded) data changes.
 
-    public class NetBuilder
+    // Unused class ?
+
+    public class NetBuilder : NotifierBase
     {
         #region fields & ctor
 

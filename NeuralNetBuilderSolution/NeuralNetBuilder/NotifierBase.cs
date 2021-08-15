@@ -1,19 +1,12 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace NeuralNetBuilder.FactoriesAndParameters
+namespace NeuralNetBuilder
 {
-    public interface IParametersBase : INotifyPropertyChanged
-    {
-    }
-
-    [Serializable]
-    public class ParametersBase : IParametersBase
+    public class NotifierBase : INotifyPropertyChanged
     {
         #region INotifyPropertyChanged
 
-        [field: NonSerialized]
         public event PropertyChangedEventHandler PropertyChanged;
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {

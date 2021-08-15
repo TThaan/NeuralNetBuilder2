@@ -11,7 +11,7 @@ namespace NeuralNetBuilder
 {
     // wa: Just test/run a given net?
     // wa: global parameters? Or in NetParameters?
-    public class Initializer
+    public class Initializer : NotifierBase
     {
         #region fields & ctor
 

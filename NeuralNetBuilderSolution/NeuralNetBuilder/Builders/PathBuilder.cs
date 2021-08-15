@@ -7,7 +7,7 @@ namespace NeuralNetBuilder.Builders
     // You can access them from the ConsoleApi, AIDemoUI or use them as Wpf's 'Command-Executes'.
     // They already do or will (soon) provide an event to notify about the (succeeded) data changes.
 
-    public class PathBuilder
+    public class PathBuilder : NotifierBase
     {
         #region fields & ctor
 
@@ -16,6 +16,7 @@ namespace NeuralNetBuilder.Builders
 
         public PathBuilder(Action<string> onInitializerStatusChanged)
         {
+            // Implement INPC!
             _onInitializerStatusChanged = onInitializerStatusChanged;
         }
 

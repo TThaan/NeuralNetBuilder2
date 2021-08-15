@@ -1,10 +1,11 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
+using System.ComponentModel;
 
 namespace NeuralNetBuilder.FactoriesAndParameters
 {
-    public interface ILayerParameters : IParametersBase
+    public interface ILayerParameters : INotifyPropertyChanged
     {
         int Id { get; set; }
         int NeuronsPerLayer { get; set; }
@@ -16,7 +17,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
     }
 
     [Serializable]
-    public class LayerParameters : ParametersBase, ILayerParameters
+    public class LayerParameters : NotifierBase, ILayerParameters
     {
         #region fields
 
@@ -48,7 +49,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
                 if (neuronsPerLayer != value)
                 {
                     neuronsPerLayer = value;
-                    OnPropertyChanged();
+                    // OnPropertyChanged();
                 }
             }
         }
@@ -109,7 +110,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
                 if (activationType != value)
                 {
                     activationType = value;
-                    OnPropertyChanged();
+                    // OnPropertyChanged();
                 }
             }
         }

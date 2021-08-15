@@ -12,7 +12,7 @@ namespace NeuralNetBuilder.Builders
     // You can access them from the ConsoleApi, AIDemoUI or use them as Wpf's 'Command-Executes'.
     // They already do or will (soon) provide an event to notify about the (succeeded) data changes.
 
-    public class ParameterBuilder
+    public class ParameterBuilder : NotifierBase
     {
         #region fields & ctor
 
@@ -39,39 +39,25 @@ namespace NeuralNetBuilder.Builders
 
         public INetParameters NetParameters
         {
-            get
-            {
-                //if (netParameters == null)
-                //    _onInitializerStatusChanged("NetParameters are null");
-                return netParameters;
-            }
+            get { return netParameters; }
             set
             {
+                // No equality check due to performance. 
                 netParameters = value;
+                OnPropertyChanged();
             }
         }
         public ITrainerParameters TrainerParameters
         {
-            get
-            {
-                //if (trainerParameters == null)
-                //    _onInitializerStatusChanged("TrainerParameters are null");
-                return trainerParameters;
-            }
+            get { return trainerParameters; }
             set
             {
+                // No equality check due to performance. 
                 trainerParameters = value;
+                OnPropertyChanged();
             }
         }
-        public ObservableCollection<ILayerParameters> LayerParametersCollection
-        {
-            get
-            {
-                //if (NetParameters.LayerParametersCollection == null)
-                //    _onInitializerStatusChanged("LayerParametersCollection is null");
-                return NetParameters.LayerParametersCollection;
-            }
-        }
+        public ObservableCollection<ILayerParameters> LayerParametersCollection => NetParameters.LayerParametersCollection;
 
         public IEnumerable<CostType> CostTypes => costTypes ??
             (costTypes = Enum.GetValues(typeof(CostType)).ToList<CostType>());
@@ -323,7 +309,7 @@ namespace NeuralNetBuilder.Builders
 
         #endregion
 
-        #region methods: Create, Load & Save
+        #region methods: Load & Save
 
         public async Task<bool> LoadNetParametersAsync(string path)
         {
