@@ -9,7 +9,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
 {
     public interface INetParameters : INotifyPropertyChanged
     {
-        ObservableCollection<ILayerParameters> LayerParametersCollection { get; }
+        ObservableCollection<ILayerParameters> LayerParametersCollection { get; set; }
         WeightInitType WeightInitType { get; set; }
     }
 
@@ -18,20 +18,21 @@ namespace NeuralNetBuilder.FactoriesAndParameters
     {
         #region fields
 
-        // private ObservableCollection<ILayerParameters> layerParametersCollection;
+        private ObservableCollection<ILayerParameters> layerParametersCollection = new ObservableCollection<ILayerParameters>();
         private WeightInitType weightInitType = WeightInitType.None;
-
-        public NetParameters()
-        {
-            // Defined this way a potentially registered INPC event will be fired
-            LayerParametersCollection = new ObservableCollection<ILayerParameters>();
-            OnPropertyChanged(nameof(LayerParametersCollection));
-        }
 
         #endregion
 
         [JsonProperty(ItemConverterType = typeof(GenericJsonConverter<LayerParameters>))]
-        public ObservableCollection<ILayerParameters> LayerParametersCollection { get; }
+        public ObservableCollection<ILayerParameters> LayerParametersCollection
+        {
+            get { return layerParametersCollection; }
+            set
+            {
+                layerParametersCollection = value;
+                OnPropertyChanged();
+            }
+        }
         [JsonConverter(typeof(StringEnumConverter))]
         public WeightInitType WeightInitType
         {

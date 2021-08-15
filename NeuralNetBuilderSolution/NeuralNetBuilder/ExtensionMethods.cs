@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NeuralNetBuilder.FactoriesAndParameters;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -138,6 +139,14 @@ namespace NeuralNetBuilder
         {
             var result = Enumerable.Cast<T>(iEnum);
             return result.OrderBy(x => x).First();
+        }
+
+        internal static INetParameters AdoptValuesOfOtherNetParameters(this INetParameters netParameters, INetParameters other)
+        {
+            netParameters.LayerParametersCollection = other.LayerParametersCollection;
+            netParameters.WeightInitType = other.WeightInitType;
+
+            return netParameters;
         }
     }
 }

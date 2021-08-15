@@ -320,7 +320,9 @@ namespace NeuralNetBuilder.Builders
                 // ar jasonParams = File.ReadAllText(_paths.NetParameters);
                 // ar sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
 
-                NetParameters = await Import.LoadAsJsonAsync<NetParameters>(path);
+                var loadedNetParameters = await Import.LoadAsJsonAsync<NetParameters>(path);
+                NetParameters.AdoptValuesOfOtherNetParameters(loadedNetParameters);
+
                 _onInitializerStatusChanged("Successfully loaded net parameters.");
                 return true;
             }
