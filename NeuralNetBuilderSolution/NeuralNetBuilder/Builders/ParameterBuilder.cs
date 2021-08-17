@@ -12,6 +12,8 @@ namespace NeuralNetBuilder.Builders
     // You can access them from the ConsoleApi, AIDemoUI or use them as Wpf's 'Command-Executes'.
     // They already do or will (soon) provide an event to notify about the (succeeded) data changes.
 
+    // Task: Add specific exception messages or remove them at all!
+
     public class ParameterBuilder : InitializerAssistant
     {
         #region fields & ctor
@@ -69,35 +71,51 @@ namespace NeuralNetBuilder.Builders
                 NetParameters.WeightInitType = (WeightInitType)weightInitType;
                 OnStatusChanged($"WeightInitType = {NetParameters.WeightInitType}.");
             }
-            catch (Exception e) { OnStatusChanged(e.Message); }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
         public void SetWeightMax_Globally(float weightMax)
         {
-            // WeightMax_Global = weightMax;
-            foreach (var lp in NetParameters.LayerParametersCollection)
+            try
+            {
+                // WeightMax_Global = weightMax;
+                foreach (var lp in NetParameters.LayerParametersCollection)
                 lp.WeightMax = weightMax;            
-            OnStatusChanged($"Global WeightMax = {weightMax}.");
+                OnStatusChanged($"Global WeightMax = {weightMax}.");
+            }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
         public void SetWeightMin_Globally(float weightMin)
         {
-            //WeightMin_Global = weightMin;
-            foreach (var lp in NetParameters.LayerParametersCollection)
+            try
+            {
+                //WeightMin_Global = weightMin;
+                foreach (var lp in NetParameters.LayerParametersCollection)
                 lp.WeightMax = weightMin;
-            OnStatusChanged($"Global WeightMin = {weightMin}.");
+                OnStatusChanged($"Global WeightMin = {weightMin}.");
+            }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
         public void SetBiasMax_Globally(float biasMax)
         {
-            //BiasMax_Global = biasMax;
-            foreach (var lp in NetParameters.LayerParametersCollection)
+            try
+            {
+                //BiasMax_Global = biasMax;
+                foreach (var lp in NetParameters.LayerParametersCollection)
                 lp.WeightMax = biasMax;
-            OnStatusChanged($"Global BiasMax = {biasMax}.");
+                OnStatusChanged($"Global BiasMax = {biasMax}.");
+            }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
         public void SetBiasMin_Globally(float biasMin)
         {
-            //BiasMin_Global = biasMin;
-            foreach (var lp in NetParameters.LayerParametersCollection)
+            try
+            {
+                //BiasMin_Global = biasMin;
+                foreach (var lp in NetParameters.LayerParametersCollection)
                 lp.WeightMax = biasMin;
-            OnStatusChanged($"Global BiasMin = {biasMin}.");
+                OnStatusChanged($"Global BiasMin = {biasMin}.");
+            }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
 
         public void AddLayerAfter(int precedingLayerId)
@@ -123,7 +141,7 @@ namespace NeuralNetBuilder.Builders
 
                 OnStatusChanged($"New layer added. (Id = {precedingLayerId + 1}).");
             }
-            catch (Exception e) { OnStatusChanged(e.Message); }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
         public void DeleteLayer(int layerId)
         {
@@ -140,7 +158,7 @@ namespace NeuralNetBuilder.Builders
                 }
                 ResetLayersIndeces();
             }
-            catch (Exception e) { OnStatusChanged(e.Message); }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
         public void MoveLayerLeft(int layerId)
         {
@@ -151,7 +169,7 @@ namespace NeuralNetBuilder.Builders
                 ResetLayersIndeces();
                 OnStatusChanged($"Layer moved left. (OldId = {layerId}).");
             }
-            catch (Exception e) { OnStatusChanged(e.Message); }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
         public void MoveLayerRight(int layerId)
         {
@@ -162,7 +180,7 @@ namespace NeuralNetBuilder.Builders
                 ResetLayersIndeces();
                 OnStatusChanged($"Layer moved right. (OldId = {layerId}).");
             }
-            catch (Exception e) { OnStatusChanged(e.Message); }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
 
         // ta: Changing N or just add/remove layers?
@@ -173,7 +191,7 @@ namespace NeuralNetBuilder.Builders
                 LayerParametersCollection[layerId].NeuronsPerLayer = neurons;
                 OnStatusChanged($"Amount of neurons in layer {layerId} = {LayerParametersCollection[layerId].NeuronsPerLayer}.");
             }
-            catch (Exception e) { OnStatusChanged(e.Message); }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
         public void SetActivationTypeAtLayer(int layerId, int activationType)
         {
@@ -182,7 +200,7 @@ namespace NeuralNetBuilder.Builders
                 LayerParametersCollection[layerId].ActivationType = (ActivationType)activationType;
                 OnStatusChanged($"Activation type of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.");
             }
-            catch (Exception e) { OnStatusChanged(e.Message); }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
         public void SetWeightMaxAtLayer(int layerId, float weightMax)
         {
@@ -191,7 +209,7 @@ namespace NeuralNetBuilder.Builders
                 LayerParametersCollection[layerId].WeightMax = weightMax;
                 OnStatusChanged($"WeightMax of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.");
             }
-            catch (Exception e) { OnStatusChanged(e.Message); }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
         public void SetWeightMinAtLayer(int layerId, float weightMin)
         {
@@ -200,7 +218,7 @@ namespace NeuralNetBuilder.Builders
                 LayerParametersCollection[layerId].WeightMin = weightMin;
                 OnStatusChanged($"WeightMin of layer {layerId} = {LayerParametersCollection[layerId].WeightMin}.");
             }
-            catch (Exception e) { OnStatusChanged(e.Message); }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
         public void SetBiasMaxAtLayer(int layerId, float biasMax)
         {
@@ -209,7 +227,7 @@ namespace NeuralNetBuilder.Builders
                 LayerParametersCollection[layerId].BiasMax = biasMax;
                 OnStatusChanged($"BiasMax of layer {layerId} = {LayerParametersCollection[layerId].BiasMax}.");
             }
-            catch (Exception e) { OnStatusChanged(e.Message); }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
         public void SetBiasMinAtLayer(int layerId, float biasMin)
         {
@@ -218,114 +236,96 @@ namespace NeuralNetBuilder.Builders
                 LayerParametersCollection[layerId].BiasMin = biasMin;
                 OnStatusChanged($"BiasMin of layer {layerId} = {LayerParametersCollection[layerId].BiasMin}.");
             }
-            catch (Exception e) { OnStatusChanged(e.Message); }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
 
         #endregion
 
         #region methods: Change TrainerParameters
 
-        public bool SetCostType(int costType)
+        public void SetCostType(int costType)
         {
             try
             {
                 TrainerParameters.CostType = (CostType)costType;
+                OnStatusChanged($"{TrainerParameters}.{TrainerParameters.CostType} has been set to {TrainerParameters.CostType}.");
             }
-            catch (Exception e) { OnStatusChanged(e.Message); return false; }
-
-            OnStatusChanged($"{TrainerParameters}.{TrainerParameters.CostType} has been set to {TrainerParameters.CostType}.");
-            return true;
+            catch (Exception e) { ThrowFormattedException(e); }
         }
-        public bool SetLearningRateChange(float learningRateChange)
+        public void SetLearningRateChange(float learningRateChange)
         {
             try
             {
                 TrainerParameters.LearningRateChange = learningRateChange;
+                OnStatusChanged($"{TrainerParameters}.{TrainerParameters.LearningRateChange} has been set to {TrainerParameters.LearningRateChange}.");
             }
-            catch (Exception e) { OnStatusChanged(e.Message); return false; }
-
-            OnStatusChanged($"{TrainerParameters}.{TrainerParameters.LearningRateChange} has been set to {TrainerParameters.LearningRateChange}.");
-            return true;
+            catch (Exception e) { ThrowFormattedException(e); }
         }
-        public bool SetLearningRate(float learningRate)
+        public void SetLearningRate(float learningRate)
         {
             try
             {
                 TrainerParameters.LearningRate = learningRate;
+                OnStatusChanged($"{TrainerParameters}.{TrainerParameters.LearningRate} has been set to {TrainerParameters.LearningRate}.");
             }
-            catch (Exception e) { OnStatusChanged(e.Message); return false; }
-
-            OnStatusChanged($"{TrainerParameters}.{TrainerParameters.LearningRate} has been set to {TrainerParameters.LearningRate}.");
-            return true;
+            catch (Exception e) { ThrowFormattedException(e); }
         }
-        public bool SetEpochs(int epochs)
+        public void SetEpochs(int epochs)
         {
             try
             {
                 TrainerParameters.Epochs = epochs;
+                OnStatusChanged($"{TrainerParameters}.{TrainerParameters.Epochs} has been set to {TrainerParameters.Epochs}.");
             }
-            catch (Exception e) { OnStatusChanged(e.Message); return false; }
-
-            OnStatusChanged($"{TrainerParameters}.{TrainerParameters.Epochs} has been set to {TrainerParameters.Epochs}.");
-            return true;
+            catch (Exception e) { ThrowFormattedException(e); }
         }
 
         #endregion
 
         #region methods: Load & Save
-        public async Task<bool> LoadNetParametersAsync(string path)
+
+        public async Task LoadNetParametersAsync(string fileName)
         {
             try
             {
                 OnStatusChanged("Loading net parameters from file, please wait...");
-
-                // ar jasonParams = File.ReadAllText(_paths.NetParameters);
-                // ar sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
-
-                NetParameters = await Import.LoadAsJsonAsync<NetParameters>(path);
-                //NetParameters.AdoptValuesOfOtherNetParameters(loadedNetParameters);
-
+                NetParameters = await Import.LoadAsJsonAsync<NetParameters>(fileName);
                 OnStatusChanged("Successfully loaded net parameters.");
-                return true;
             }
-            catch (Exception e) { base.OnStatusChanged($"{e.Message}"); return false; }
+            catch (JsonReaderException e) { throw new ArgumentException($"Couldn't read the Json file.\nDetails: {e.Message}"); }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
-        public async Task<bool> LoadTrainerParametersAsync(string path)
+        public async Task LoadTrainerParametersAsync(string path)
         {
             try
             {
-                OnStatusChanged("Loading trainer parameters from file, please wait...");
-                // var jasonParams = File.ReadAllText(_paths.TrainerParameters);
-                // var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
-                    
-                TrainerParameters = await Import.LoadAsJsonAsync<TrainerParameters>(path);  // Adopt!
+                OnStatusChanged("Loading trainer parameters from file, please wait...");                    
+                TrainerParameters = await Import.LoadAsJsonAsync<TrainerParameters>(path);
                 OnStatusChanged("Successfully loaded trainer parameters.");
-                return true;
             }
-            catch (Exception e) { base.OnStatusChanged($"{e.Message}"); return false; }
+            catch (JsonReaderException e) { throw new ArgumentException($"Couldn't read the Json file.\nDetails: {e.Message}"); }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
 
-        public async Task<bool> SaveNetParametersAsync(string path, Formatting formatting = Formatting.Indented)
+        public async Task SaveNetParametersAsync(string path, Formatting formatting = Formatting.Indented)
         {
             try
             {
                 OnStatusChanged("Saving net parameters, please wait...");
                 await Export.SaveAsJsonAsync(NetParameters, path, formatting, true);
-                base.OnStatusChanged("Successfully saved net parameters.");
-                return true;
+                OnStatusChanged("Successfully saved net parameters.");
             }
-            catch (Exception e) { base.OnStatusChanged(e.Message); return false; }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
-        public async Task<bool> SaveTrainerParametersAsync(string path, Formatting formatting = Formatting.Indented)
+        public async Task SaveTrainerParametersAsync(string path, Formatting formatting = Formatting.Indented)
         {
             try
             {
                 OnStatusChanged("Saving trainer parameters, please wait...");
                 await Export.SaveAsJsonAsync(TrainerParameters, path, formatting, true);
                 OnStatusChanged("Successfully saved trainer parameters.");
-                return true;
             }
-            catch (Exception e) { base.OnStatusChanged(e.Message); return false; }
+            catch (Exception e) { ThrowFormattedException(e); }
         }
 
         #endregion
@@ -339,6 +339,10 @@ namespace NeuralNetBuilder.Builders
             int i = 0;
             foreach (var layerParam in NetParameters.LayerParametersCollection)
                 layerParam.Id = i++;
+        }
+        private void ThrowFormattedException(Exception e)
+        {
+            throw new ArgumentException($"{e.GetType().Name}:\nDetails: {e.Message}");
         }
 
         #endregion

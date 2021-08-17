@@ -18,18 +18,12 @@ namespace NeuralNetBuilder
     {
         #region fields & ctor
 
-        private PathBuilder paths;
-        private ParameterBuilder parameterBuilder;
-        private ISampleSet sampleSet;
-        private INet net, trainedNet;
-        private ITrainer trainer;
-
         public Initializer()
         {
-            paths = new PathBuilder();                                      // DI?
-            parameterBuilder = new ParameterBuilder();                      // DI?
-            parameterBuilder.NetParameters = new NetParameters();           // DI?
-            parameterBuilder.TrainerParameters = new TrainerParameters();   // DI?
+            // paths = new PathBuilder();                                      // DI?
+            ParameterBuilder = new ParameterBuilder();                      // DI?
+            ParameterBuilder.NetParameters = new NetParameters();           // DI?
+            ParameterBuilder.TrainerParameters = new TrainerParameters();   // DI?
 
             // Do I need INotifyStatusChanged only in Builders?
             RegisterStatusChanged();
@@ -43,24 +37,24 @@ namespace NeuralNetBuilder
             // Actually: 'OnInitializerStatusChanged(..)' is passed to al builders.
             // So only initializer's event need be registered.
             // But the UI shall have access to yet to be defined properties instead of throwing an exception due to a non existing class.
-            trainer = new Trainer();        // DI?
-            net = new Net();                // DI?
-            sampleSet = new SampleSet();    // DI?
+            Trainer = new Trainer();        // DI?
+            Net = new Net();                // DI?
+            SampleSet = new SampleSet();    // DI?
         }
 
         #region helpers
 
         private void RegisterStatusChanged()
         {
-            parameterBuilder.StatusChanged += InitializerAssistant_StatusChanged;
-            parameterBuilder.TrainerParameters.StatusChanged += InitializerAssistant_StatusChanged;
-            parameterBuilder.NetParameters.StatusChanged += InitializerAssistant_StatusChanged;
+            ParameterBuilder.StatusChanged += InitializerAssistant_StatusChanged;
+            ParameterBuilder.TrainerParameters.StatusChanged += InitializerAssistant_StatusChanged;
+            ParameterBuilder.NetParameters.StatusChanged += InitializerAssistant_StatusChanged;
         }
         private void RegisterPropertyChanged()
         {
-            parameterBuilder.NetParameters.PropertyChanged += InitializerAssistant_PropertyChanged;
-            parameterBuilder.TrainerParameters.PropertyChanged += InitializerAssistant_PropertyChanged;
-            parameterBuilder.PropertyChanged += InitializerAssistant_PropertyChanged;
+            ParameterBuilder.NetParameters.PropertyChanged += InitializerAssistant_PropertyChanged;
+            ParameterBuilder.TrainerParameters.PropertyChanged += InitializerAssistant_PropertyChanged;
+            ParameterBuilder.PropertyChanged += InitializerAssistant_PropertyChanged;
         }
 
         #endregion
@@ -69,64 +63,11 @@ namespace NeuralNetBuilder
 
         #region properties
 
-        public PathBuilder Paths
-        {
-            get
-            {
-                //if (paths == null)
-                //    OnInitializerStatusChanged("Paths are null");
-                return paths;
-            }
-        }
-        public ParameterBuilder ParameterBuilder
-        {
-            get
-            {
-                //if (parameterBuilder == null)
-                //    OnInitializerStatusChanged("ParameterBuilder is null");
-                return parameterBuilder;
-            }
-        }
-        public ISampleSet SampleSet
-        {
-            get
-            {
-                //if (sampleSet == null)
-                //    OnInitializerStatusChanged("SampleSet is null");
-                return sampleSet;
-            }
-            set { sampleSet = value; }
-        }
-        public INet Net
-        {
-            get
-            {
-                //if (net == null)
-                //    OnInitializerStatusChanged("Net is null");
-                return net;
-            }
-            set { net = value; }
-        }
-        public INet TrainedNet
-        {
-            get
-            {
-                //if (trainedNet == null)
-                //    OnInitializerStatusChanged("TrainedNet is null");
-                return trainedNet;
-            }
-            set { trainedNet = value; }
-        }
-        public ITrainer Trainer
-        {
-            get
-            {
-                //if (trainer == null)
-                //    OnInitializerStatusChanged("Trainer is null");
-                return trainer;
-            }
-            set { trainer = value; }
-        }
+        public ParameterBuilder ParameterBuilder { get; }
+        public ISampleSet SampleSet { get; set; }
+        public INet Net { get; set; }
+        public INet TrainedNet { get; set; }
+        public ITrainer Trainer { get; set; }
         public bool IsLogged { get; set; }
         public string LogName { get; set; } //?
 
@@ -134,7 +75,7 @@ namespace NeuralNetBuilder
 
         #region methods
 
-        public async Task<bool> TrainAsync(ISampleSet sampleSet, bool shuffle = false)
+        public async Task<bool> TrainAsync(ISampleSet sampleSet, bool shuffle, string logFileName = "")
         {
             if (Trainer == null)
                 throw new ArgumentException("\nYou need a trainer to start training!");
@@ -149,7 +90,7 @@ namespace NeuralNetBuilder
             try
             {
                 OnStatusChanged($"\n            Training, please wait...\n");
-                await Trainer.TrainAsync(shuffle, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
+                await Trainer.TrainAsync(shuffle, IsLogged ? logFileName : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
                 TrainedNet = Trainer.TrainedNet?.GetCopy();
                 OnStatusChanged($"\n            Finished training.\n");
                 return true;
@@ -213,7 +154,7 @@ namespace NeuralNetBuilder
                 OnStatusChanged("You need to create the net to create the trainer!");
                 return false;
             }
-            if (sampleSet == null)
+            if (SampleSet == null)
             {
                 OnStatusChanged("You need a sample set to create the trainer!");
                 return false;
@@ -229,47 +170,47 @@ namespace NeuralNetBuilder
                     Trainer.LearningRateChange = ParameterBuilder.TrainerParameters.LearningRateChange;
                     Trainer.CostType = ParameterBuilder.TrainerParameters.CostType;
                     Trainer.OriginalNet = Net.GetCopy();
-                    Trainer.SampleSet = sampleSet;
+                    Trainer.SampleSet = SampleSet;
                     OnStatusChanged("Successfully created trainer.");
                     return true;
                 }
                 catch (Exception e) { OnStatusChanged(e.Message); return false; }
             });
         }
-        public async Task<bool> SaveInitializedNetAsync()
+        public async Task<bool> SaveInitializedNetAsync(string fileName)
         {
             try
             {
                 OnStatusChanged("Saving initialized net, please wait...");
 
                 var jsonString = JsonConvert.SerializeObject(Net, Formatting.Indented);
-                await File.AppendAllTextAsync(Paths.InitializedNet, jsonString);
+                await File.AppendAllTextAsync(fileName, jsonString);
 
                 OnStatusChanged("Successfully saved initialized net.");
                 return true;
             }
             catch (Exception e) { OnStatusChanged(e.Message); return false; }
         }
-        public async Task<bool> SaveTrainedNetAsync()
+        public async Task<bool> SaveTrainedNetAsync(string fileName)
         {
             try
             {
                 OnStatusChanged("Saving trained net, please wait...");
 
                 var jsonString = JsonConvert.SerializeObject(TrainedNet, Formatting.Indented);
-                await File.AppendAllTextAsync(Paths.TrainedNet, jsonString);
+                await File.AppendAllTextAsync(fileName, jsonString);
 
                 OnStatusChanged("Successfully saved trained net.");
                 return true;
             }
             catch (Exception e) { OnStatusChanged(e.Message); return false; }
         }
-        public async Task<bool> LoadNetAsync()
+        public async Task<bool> LoadNetAsync(string fileName)
         {
             try
             {
                 OnStatusChanged("Loading initialized net from file, please wait...");
-                var jsonString = await File.ReadAllTextAsync(Paths.InitializedNet);
+                var jsonString = await File.ReadAllTextAsync(fileName);
 
                 dynamic dynamicNet = JObject.Parse(jsonString);
                 ILayer[] layers = ((JArray)dynamicNet.Layers).ToObject<Layer[]>();
@@ -289,12 +230,12 @@ namespace NeuralNetBuilder
             }
             catch (Exception e) { OnStatusChanged(e.Message); return false; }
         }
-        public async Task<bool> LoadTrainedNetAsync()
+        public async Task<bool> LoadTrainedNetAsync(string fileName)
         {
             try
             {
                 OnStatusChanged("Loading trained net from file, please wait...");
-                var jsonString = await File.ReadAllTextAsync(Paths.TrainedNet);
+                var jsonString = await File.ReadAllTextAsync(fileName);
 
                 dynamic dynamicNet = JObject.Parse(jsonString);
                 ILayer[] layers = ((JArray)dynamicNet.Layers).ToObject<Layer[]>();
