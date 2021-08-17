@@ -12,11 +12,9 @@ namespace NeuralNetBuilder.Builders
     // You can access them from the ConsoleApi, AIDemoUI or use them as Wpf's 'Command-Executes'.
     // They already do or will (soon) provide an event to notify about the (succeeded) data changes.
 
-    public class ParameterBuilder : NotifierBase
+    public class ParameterBuilder : InitializerAssistant
     {
         #region fields & ctor
-
-        private readonly Action<string> _onInitializerStatusChanged;
 
         private IEnumerable<ActivationType> activationTypes;
         private IEnumerable<CostType> costTypes;
@@ -24,14 +22,6 @@ namespace NeuralNetBuilder.Builders
 
         private INetParameters netParameters;
         private ITrainerParameters trainerParameters;
-
-        public ParameterBuilder(Action<string> onInitializerStatusChanged)
-        {
-            _onInitializerStatusChanged = onInitializerStatusChanged;   // DI?
-
-            netParameters = new NetParameters();            // DI?
-            trainerParameters = new TrainerParameters();    // DI?
-        }
 
         #endregion
 
@@ -42,7 +32,7 @@ namespace NeuralNetBuilder.Builders
             get { return netParameters; }
             set
             {
-                // No equality check due to performance. 
+                // No equality check due to performance. (wa ref equal?)
                 netParameters = value;
                 OnPropertyChanged();
             }
@@ -72,55 +62,45 @@ namespace NeuralNetBuilder.Builders
         
         #region methods: Change NetParameters
 
-        public bool SetWeightInitType(int weightInitType)
+        public void SetWeightInitType(int weightInitType)
         {
             try
             {
                 NetParameters.WeightInitType = (WeightInitType)weightInitType;
+                OnStatusChanged($"WeightInitType = {NetParameters.WeightInitType}.");
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"WeightInitType = {NetParameters.WeightInitType}.");
-            return true;
+            catch (Exception e) { OnStatusChanged(e.Message); }
         }
-        public bool SetWeightMax_Globally(float weightMax)
+        public void SetWeightMax_Globally(float weightMax)
         {
             // WeightMax_Global = weightMax;
             foreach (var lp in NetParameters.LayerParametersCollection)
-                lp.WeightMax = weightMax;
-            
-            _onInitializerStatusChanged($"Global WeightMax = {weightMax}.");
-            return true;
+                lp.WeightMax = weightMax;            
+            OnStatusChanged($"Global WeightMax = {weightMax}.");
         }
-        public bool SetWeightMin_Globally(float weightMin)
+        public void SetWeightMin_Globally(float weightMin)
         {
             //WeightMin_Global = weightMin;
             foreach (var lp in NetParameters.LayerParametersCollection)
                 lp.WeightMax = weightMin;
-
-            _onInitializerStatusChanged($"Global WeightMin = {weightMin}.");
-            return true;
+            OnStatusChanged($"Global WeightMin = {weightMin}.");
         }
-        public bool SetBiasMax_Globally(float biasMax)
+        public void SetBiasMax_Globally(float biasMax)
         {
             //BiasMax_Global = biasMax;
             foreach (var lp in NetParameters.LayerParametersCollection)
                 lp.WeightMax = biasMax;
-
-            _onInitializerStatusChanged($"Global BiasMax = {biasMax}.");
-            return true;
+            OnStatusChanged($"Global BiasMax = {biasMax}.");
         }
-        public bool SetBiasMin_Globally(float biasMin)
+        public void SetBiasMin_Globally(float biasMin)
         {
             //BiasMin_Global = biasMin;
             foreach (var lp in NetParameters.LayerParametersCollection)
                 lp.WeightMax = biasMin;
-
-            _onInitializerStatusChanged($"Global BiasMin = {biasMin}.");
-            return true;
+            OnStatusChanged($"Global BiasMin = {biasMin}.");
         }
 
-        public bool AddLayerAfter(int precedingLayerId)
+        public void AddLayerAfter(int precedingLayerId)
         {
             try
             {
@@ -140,122 +120,105 @@ namespace NeuralNetBuilder.Builders
 
                 LayerParametersCollection.Insert(precedingLayerId + 1, newLayerParameters);
                 ResetLayersIndeces();
-            }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
 
-            _onInitializerStatusChanged($"New layer added. (Id = {precedingLayerId + 1}).");
-            return true;
+                OnStatusChanged($"New layer added. (Id = {precedingLayerId + 1}).");
+            }
+            catch (Exception e) { OnStatusChanged(e.Message); }
         }
-        public bool DeleteLayer(int layerId)
+        public void DeleteLayer(int layerId)
         {
+            LayerParametersCollection.Remove(LayerParametersCollection[layerId]);
             try
             {
                 if (LayerParametersCollection.Count > 2)
-                    LayerParametersCollection.Remove(LayerParametersCollection[layerId]);
+                {
+                    OnStatusChanged($"Layer deleted. (Id = {layerId}).");
+                }
                 else
                 {
-                    _onInitializerStatusChanged($"You must not delete the last standing layer.");
-                    return false;
+                    OnStatusChanged($"You must not delete the last standing layer.");
                 }
                 ResetLayersIndeces();
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-            
-            _onInitializerStatusChanged($"Layer deleted. (Id = {layerId}).");
-            return true;
+            catch (Exception e) { OnStatusChanged(e.Message); }
         }
-        public bool MoveLayerLeft(int layerId)
+        public void MoveLayerLeft(int layerId)
         {
             try
             {
                 LayerParametersCollection.Move(
                 layerId, layerId > 0 ? layerId - 1 : 0);
                 ResetLayersIndeces();
+                OnStatusChanged($"Layer moved left. (OldId = {layerId}).");
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"Layer moved left. (OldId = {layerId}).");
-            return true;
+            catch (Exception e) { OnStatusChanged(e.Message); }
         }
-        public bool MoveLayerRight(int layerId)
+        public void MoveLayerRight(int layerId)
         {
             try
             {
                 LayerParametersCollection.Move(
                 layerId, layerId < NetParameters.LayerParametersCollection.Count - 1 ? layerId + 1 : 0);
                 ResetLayersIndeces();
+                OnStatusChanged($"Layer moved right. (OldId = {layerId}).");
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"Layer moved right. (OldId = {layerId}).");
-            return true;
+            catch (Exception e) { OnStatusChanged(e.Message); }
         }
 
-        public bool SetNeuronsAtLayer(int layerId, int neurons)
+        // ta: Changing N or just add/remove layers?
+        public void SetNeuronsAtLayer(int layerId, int neurons)
         {
             try
             {
                 LayerParametersCollection[layerId].NeuronsPerLayer = neurons;
+                OnStatusChanged($"Amount of neurons in layer {layerId} = {LayerParametersCollection[layerId].NeuronsPerLayer}.");
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"Amount of neurons in layer {layerId} = {LayerParametersCollection[layerId].NeuronsPerLayer}.");
-            return true;
+            catch (Exception e) { OnStatusChanged(e.Message); }
         }
-        public bool SetActivationTypeAtLayer(int layerId, int activationType)
+        public void SetActivationTypeAtLayer(int layerId, int activationType)
         {
             try
             {
                 LayerParametersCollection[layerId].ActivationType = (ActivationType)activationType;
+                OnStatusChanged($"Activation type of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.");
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"Activation type of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.");
-            return true;
+            catch (Exception e) { OnStatusChanged(e.Message); }
         }
-        public bool SetWeightMaxAtLayer(int layerId, float weightMax)
+        public void SetWeightMaxAtLayer(int layerId, float weightMax)
         {
             try
             {
-                    LayerParametersCollection[layerId].WeightMax = weightMax;
+                LayerParametersCollection[layerId].WeightMax = weightMax;
+                OnStatusChanged($"WeightMax of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.");
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"WeightMax of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.");
-            return true;
+            catch (Exception e) { OnStatusChanged(e.Message); }
         }
-        public bool SetWeightMinAtLayer(int layerId, float weightMin)
+        public void SetWeightMinAtLayer(int layerId, float weightMin)
         {
             try
             {
                 LayerParametersCollection[layerId].WeightMin = weightMin;
+                OnStatusChanged($"WeightMin of layer {layerId} = {LayerParametersCollection[layerId].WeightMin}.");
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"WeightMin of layer {layerId} = {LayerParametersCollection[layerId].WeightMin}.");
-            return true;
+            catch (Exception e) { OnStatusChanged(e.Message); }
         }
-        public bool SetBiasMaxAtLayer(int layerId, float biasMax)
+        public void SetBiasMaxAtLayer(int layerId, float biasMax)
         {
             try
             {
                 LayerParametersCollection[layerId].BiasMax = biasMax;
+                OnStatusChanged($"BiasMax of layer {layerId} = {LayerParametersCollection[layerId].BiasMax}.");
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"BiasMax of layer {layerId} = {LayerParametersCollection[layerId].BiasMax}.");
-            return true;
+            catch (Exception e) { OnStatusChanged(e.Message); }
         }
-        public bool SetBiasMinAtLayer(int layerId, float biasMin)
+        public void SetBiasMinAtLayer(int layerId, float biasMin)
         {
             try
             {
                 LayerParametersCollection[layerId].BiasMin = biasMin;
+                OnStatusChanged($"BiasMin of layer {layerId} = {LayerParametersCollection[layerId].BiasMin}.");
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
-
-            _onInitializerStatusChanged($"BiasMin of layer {layerId} = {LayerParametersCollection[layerId].BiasMin}.");
-            return true;
+            catch (Exception e) { OnStatusChanged(e.Message); }
         }
 
         #endregion
@@ -268,9 +231,9 @@ namespace NeuralNetBuilder.Builders
             {
                 TrainerParameters.CostType = (CostType)costType;
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
+            catch (Exception e) { OnStatusChanged(e.Message); return false; }
 
-            _onInitializerStatusChanged($"{TrainerParameters}.{TrainerParameters.CostType} has been set to {TrainerParameters.CostType}.");
+            OnStatusChanged($"{TrainerParameters}.{TrainerParameters.CostType} has been set to {TrainerParameters.CostType}.");
             return true;
         }
         public bool SetLearningRateChange(float learningRateChange)
@@ -279,9 +242,9 @@ namespace NeuralNetBuilder.Builders
             {
                 TrainerParameters.LearningRateChange = learningRateChange;
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
+            catch (Exception e) { OnStatusChanged(e.Message); return false; }
 
-            _onInitializerStatusChanged($"{TrainerParameters}.{TrainerParameters.LearningRateChange} has been set to {TrainerParameters.LearningRateChange}.");
+            OnStatusChanged($"{TrainerParameters}.{TrainerParameters.LearningRateChange} has been set to {TrainerParameters.LearningRateChange}.");
             return true;
         }
         public bool SetLearningRate(float learningRate)
@@ -290,9 +253,9 @@ namespace NeuralNetBuilder.Builders
             {
                 TrainerParameters.LearningRate = learningRate;
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
+            catch (Exception e) { OnStatusChanged(e.Message); return false; }
 
-            _onInitializerStatusChanged($"{TrainerParameters}.{TrainerParameters.LearningRate} has been set to {TrainerParameters.LearningRate}.");
+            OnStatusChanged($"{TrainerParameters}.{TrainerParameters.LearningRate} has been set to {TrainerParameters.LearningRate}.");
             return true;
         }
         public bool SetEpochs(int epochs)
@@ -301,69 +264,68 @@ namespace NeuralNetBuilder.Builders
             {
                 TrainerParameters.Epochs = epochs;
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
+            catch (Exception e) { OnStatusChanged(e.Message); return false; }
 
-            _onInitializerStatusChanged($"{TrainerParameters}.{TrainerParameters.Epochs} has been set to {TrainerParameters.Epochs}.");
+            OnStatusChanged($"{TrainerParameters}.{TrainerParameters.Epochs} has been set to {TrainerParameters.Epochs}.");
             return true;
         }
 
         #endregion
 
         #region methods: Load & Save
-
         public async Task<bool> LoadNetParametersAsync(string path)
         {
             try
             {
-                _onInitializerStatusChanged("Loading net parameters from file, please wait...");
+                OnStatusChanged("Loading net parameters from file, please wait...");
 
                 // ar jasonParams = File.ReadAllText(_paths.NetParameters);
                 // ar sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
 
-                var loadedNetParameters = await Import.LoadAsJsonAsync<NetParameters>(path);
-                NetParameters.AdoptValuesOfOtherNetParameters(loadedNetParameters);
+                NetParameters = await Import.LoadAsJsonAsync<NetParameters>(path);
+                //NetParameters.AdoptValuesOfOtherNetParameters(loadedNetParameters);
 
-                _onInitializerStatusChanged("Successfully loaded net parameters.");
+                OnStatusChanged("Successfully loaded net parameters.");
                 return true;
             }
-            catch (Exception e) { _onInitializerStatusChanged($"{e.Message}"); return false; }
+            catch (Exception e) { base.OnStatusChanged($"{e.Message}"); return false; }
         }
         public async Task<bool> LoadTrainerParametersAsync(string path)
         {
             try
             {
-                _onInitializerStatusChanged("Loading trainer parameters from file, please wait...");
+                OnStatusChanged("Loading trainer parameters from file, please wait...");
                 // var jasonParams = File.ReadAllText(_paths.TrainerParameters);
                 // var sp = JsonConvert.DeserializeObject<SerializedParameters>(jasonParams);
                     
-                TrainerParameters = await Import.LoadAsJsonAsync<TrainerParameters>(path);
-                _onInitializerStatusChanged("Successfully loaded trainer parameters.");
+                TrainerParameters = await Import.LoadAsJsonAsync<TrainerParameters>(path);  // Adopt!
+                OnStatusChanged("Successfully loaded trainer parameters.");
                 return true;
             }
-            catch (Exception e) { _onInitializerStatusChanged($"{e.Message}"); return false; }
+            catch (Exception e) { base.OnStatusChanged($"{e.Message}"); return false; }
         }
 
         public async Task<bool> SaveNetParametersAsync(string path, Formatting formatting = Formatting.Indented)
         {
             try
             {
-                _onInitializerStatusChanged("Saving net parameters, please wait...");
+                OnStatusChanged("Saving net parameters, please wait...");
                 await Export.SaveAsJsonAsync(NetParameters, path, formatting, true);
-                _onInitializerStatusChanged("Successfully saved net parameters.");
+                base.OnStatusChanged("Successfully saved net parameters.");
                 return true;
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
+            catch (Exception e) { base.OnStatusChanged(e.Message); return false; }
         }
         public async Task<bool> SaveTrainerParametersAsync(string path, Formatting formatting = Formatting.Indented)
         {
             try
             {
-                _onInitializerStatusChanged("Saving trainer parameters, please wait...");
+                OnStatusChanged("Saving trainer parameters, please wait...");
                 await Export.SaveAsJsonAsync(TrainerParameters, path, formatting, true);
-                _onInitializerStatusChanged("Successfully saved trainer parameters.");
+                OnStatusChanged("Successfully saved trainer parameters.");
                 return true;
             }
-            catch (Exception e) { _onInitializerStatusChanged(e.Message); return false; }
+            catch (Exception e) { base.OnStatusChanged(e.Message); return false; }
         }
 
         #endregion

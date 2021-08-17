@@ -4,14 +4,17 @@ using NeuralNetBuilder.FactoriesAndParameters;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.ComponentModel;
 using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace NeuralNetBuilder
 {
     // wa: Just test/run a given net?
     // wa: global parameters? Or in NetParameters?
-    public class Initializer : NotifierBase
+    public class Initializer : INotifyPropertyChanged, INotifyStatusChanged// : NotifierBase
     {
         #region fields & ctor
 
@@ -23,8 +26,18 @@ namespace NeuralNetBuilder
 
         public Initializer()
         {
-            paths = new PathBuilder(OnInitializerStatusChanged);                        // via DC?
-            parameterBuilder = new ParameterBuilder(OnInitializerStatusChanged); // via DC?
+            paths = new PathBuilder();                                      // DI?
+            parameterBuilder = new ParameterBuilder();                      // DI?
+            parameterBuilder.NetParameters = new NetParameters();           // DI?
+            parameterBuilder.TrainerParameters = new TrainerParameters();   // DI?
+
+            // Do I need INotifyStatusChanged only in Builders?
+            RegisterStatusChanged();
+
+            // Do I need IPropertyStatusChanged only in Builders?
+            RegisterPropertyChanged();
+
+            // wa: INCC?
 
             // Define an uninitialized trainer to enable the client to register events when defining the initializer?
             // Actually: 'OnInitializerStatusChanged(..)' is passed to al builders.
@@ -34,6 +47,23 @@ namespace NeuralNetBuilder
             net = new Net();                // DI?
             sampleSet = new SampleSet();    // DI?
         }
+
+        #region helpers
+
+        private void RegisterStatusChanged()
+        {
+            parameterBuilder.StatusChanged += InitializerAssistant_StatusChanged;
+            parameterBuilder.TrainerParameters.StatusChanged += InitializerAssistant_StatusChanged;
+            parameterBuilder.NetParameters.StatusChanged += InitializerAssistant_StatusChanged;
+        }
+        private void RegisterPropertyChanged()
+        {
+            parameterBuilder.NetParameters.PropertyChanged += InitializerAssistant_PropertyChanged;
+            parameterBuilder.TrainerParameters.PropertyChanged += InitializerAssistant_PropertyChanged;
+            parameterBuilder.PropertyChanged += InitializerAssistant_PropertyChanged;
+        }
+
+        #endregion
 
         #endregion
 
@@ -118,13 +148,13 @@ namespace NeuralNetBuilder
 
             try
             {
-                OnInitializerStatusChanged($"\n            Training, please wait...\n");
+                OnStatusChanged($"\n            Training, please wait...\n");
                 await Trainer.TrainAsync(shuffle, IsLogged ? Paths.Log : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
                 TrainedNet = Trainer.TrainedNet?.GetCopy();
-                OnInitializerStatusChanged($"\n            Finished training.\n");
+                OnStatusChanged($"\n            Finished training.\n");
                 return true;
             }
-            catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
+            catch (Exception e) { OnStatusChanged(e.Message); return false; }
         }
         /// <summary>
         /// Valid parameters: Undefined, AppendLabelsLayer
@@ -138,7 +168,7 @@ namespace NeuralNetBuilder
             {
                 if (SampleSet == null || SampleSet.TrainSet == null || SampleSet.TestSet == null)
                 {
-                    OnInitializerStatusChanged("You need a sample set (incl a train set and a test set) to append a default labels layer!");
+                    OnStatusChanged("You need a sample set (incl a train set and a test set) to append a default labels layer!");
                     return false;
                 }
 
@@ -161,31 +191,31 @@ namespace NeuralNetBuilder
             {
                 try
                 {
-                    OnInitializerStatusChanged("Creating net, please wait...");
+                    OnStatusChanged("Creating net, please wait...");
                     Net = NetFactory.CreateNet(ParameterBuilder.NetParameters);  // as async method?
-                    OnInitializerStatusChanged("Successfully created net.");
+                    OnStatusChanged("Successfully created net.");
                     return true;
                 }
-                catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
+                catch (Exception e) { OnStatusChanged(e.Message); return false; }
             });
         }
         public async Task<bool> CreateTrainerAsync()
         {
             if (ParameterBuilder.TrainerParameters == null)
             {
-                OnInitializerStatusChanged("You need trainer parameters to create the trainer!");
+                OnStatusChanged("You need trainer parameters to create the trainer!");
                 return false;
             }
 
             // Attach net & sampleset to trainer after initializing?
             if (Net == null)
             {
-                OnInitializerStatusChanged("You need to create the net to create the trainer!");
+                OnStatusChanged("You need to create the net to create the trainer!");
                 return false;
             }
             if (sampleSet == null)
             {
-                OnInitializerStatusChanged("You need a sample set to create the trainer!");
+                OnStatusChanged("You need a sample set to create the trainer!");
                 return false;
             }
 
@@ -193,52 +223,52 @@ namespace NeuralNetBuilder
             {
                 try
                 {
-                    OnInitializerStatusChanged("Createing trainer, please wait...");
+                    OnStatusChanged("Createing trainer, please wait...");
                     Trainer.Epochs = ParameterBuilder.TrainerParameters.Epochs;
                     Trainer.LearningRate = ParameterBuilder.TrainerParameters.LearningRate;
                     Trainer.LearningRateChange = ParameterBuilder.TrainerParameters.LearningRateChange;
                     Trainer.CostType = ParameterBuilder.TrainerParameters.CostType;
                     Trainer.OriginalNet = Net.GetCopy();
                     Trainer.SampleSet = sampleSet;
-                    OnInitializerStatusChanged("Successfully created trainer.");
+                    OnStatusChanged("Successfully created trainer.");
                     return true;
                 }
-                catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
+                catch (Exception e) { OnStatusChanged(e.Message); return false; }
             });
         }
         public async Task<bool> SaveInitializedNetAsync()
         {
             try
             {
-                OnInitializerStatusChanged("Saving initialized net, please wait...");
+                OnStatusChanged("Saving initialized net, please wait...");
 
                 var jsonString = JsonConvert.SerializeObject(Net, Formatting.Indented);
                 await File.AppendAllTextAsync(Paths.InitializedNet, jsonString);
 
-                OnInitializerStatusChanged("Successfully saved initialized net.");
+                OnStatusChanged("Successfully saved initialized net.");
                 return true;
             }
-            catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
+            catch (Exception e) { OnStatusChanged(e.Message); return false; }
         }
         public async Task<bool> SaveTrainedNetAsync()
         {
             try
             {
-                OnInitializerStatusChanged("Saving trained net, please wait...");
+                OnStatusChanged("Saving trained net, please wait...");
 
                 var jsonString = JsonConvert.SerializeObject(TrainedNet, Formatting.Indented);
                 await File.AppendAllTextAsync(Paths.TrainedNet, jsonString);
 
-                OnInitializerStatusChanged("Successfully saved trained net.");
+                OnStatusChanged("Successfully saved trained net.");
                 return true;
             }
-            catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
+            catch (Exception e) { OnStatusChanged(e.Message); return false; }
         }
         public async Task<bool> LoadNetAsync()
         {
             try
             {
-                OnInitializerStatusChanged("Loading initialized net from file, please wait...");
+                OnStatusChanged("Loading initialized net from file, please wait...");
                 var jsonString = await File.ReadAllTextAsync(Paths.InitializedNet);
 
                 dynamic dynamicNet = JObject.Parse(jsonString);
@@ -254,16 +284,16 @@ namespace NeuralNetBuilder
 
                 Net = JsonConvert.DeserializeObject<Net>(jsonString);
                 Net.Layers = layers;
-                OnInitializerStatusChanged("Successfully loaded initialized net.");
+                OnStatusChanged("Successfully loaded initialized net.");
                 return true;
             }
-            catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
+            catch (Exception e) { OnStatusChanged(e.Message); return false; }
         }
         public async Task<bool> LoadTrainedNetAsync()
         {
             try
             {
-                OnInitializerStatusChanged("Loading trained net from file, please wait...");
+                OnStatusChanged("Loading trained net from file, please wait...");
                 var jsonString = await File.ReadAllTextAsync(Paths.TrainedNet);
 
                 dynamic dynamicNet = JObject.Parse(jsonString);
@@ -279,22 +309,68 @@ namespace NeuralNetBuilder
 
                 TrainedNet = JsonConvert.DeserializeObject<Net>(jsonString);
                 Net.Layers = layers;
-                OnInitializerStatusChanged("Successfully loaded trained net.");
+                OnStatusChanged("Successfully loaded trained net.");
                 return true;
             }
-            catch (Exception e) { OnInitializerStatusChanged(e.Message); return false; }
+            catch (Exception e) { OnStatusChanged(e.Message); return false; }
         }
 
         // Set IsLogged and Logname ?
 
         #endregion
 
-        #region InitializerEventHandler
+        #region INotifyPropertyChanged
 
-        public event InitializerStatusChangedEventHandler InitializerStatusChanged;
-        void OnInitializerStatusChanged(string info)
+        private event PropertyChangedEventHandler propertyChanged;
+        public event PropertyChangedEventHandler PropertyChanged
         {
-            InitializerStatusChanged?.Invoke(this, new InitializerStatusChangedEventArgs(info));
+            add
+            {
+                if (propertyChanged == null || !propertyChanged.GetInvocationList().Contains(value))
+                    propertyChanged += value;
+                // else Log when debugging.
+
+            }
+            remove { propertyChanged -= value; }
+        }
+        public bool IsPropertyChangedNull => propertyChanged == null;
+        public void InitializerAssistant_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ParameterBuilder.NetParameters))
+                RegisterPropertyChanged();
+            // else if (e.PropertyName == nameof(ParameterBuilder.NetParameters.LayerParametersCollection))
+
+                OnPropertyChanged(e.PropertyName);
+        }
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            propertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        #endregion
+
+        #region INotifyStatusChanged
+
+        private event StatusChangedEventHandler statusChanged;
+        public event StatusChangedEventHandler StatusChanged
+        {
+            add
+            {
+                if (statusChanged == null || !statusChanged.GetInvocationList().Contains(value))
+                    statusChanged += value;
+                // else Log when debugging.
+
+            }
+            remove { statusChanged -= value; }
+        }
+        public bool IsStatusChangedNull => statusChanged == null;
+        public void InitializerAssistant_StatusChanged(object sender, StatusChangedEventArgs e)
+        {
+                OnStatusChanged(e.Info);
+        }
+        protected virtual void OnStatusChanged([CallerMemberName] string propertyName = null)
+        {
+            statusChanged?.Invoke(this, new StatusChangedEventArgs(propertyName));
         }
 
         #endregion

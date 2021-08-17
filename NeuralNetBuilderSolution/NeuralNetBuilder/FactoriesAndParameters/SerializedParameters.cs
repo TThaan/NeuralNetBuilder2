@@ -16,7 +16,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
     }
 
     [Serializable]  // Or use json only?
-    public class SerializedParameters : NotifierBase, ISerializedParameters
+    public class SerializedParameters : InitializerAssistant, ISerializedParameters
     {
         [JsonConverter(typeof(GenericJsonConverter<NetParameters>))]
         public INetParameters NetParameters { get; set; }

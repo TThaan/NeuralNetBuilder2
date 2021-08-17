@@ -141,12 +141,10 @@ namespace NeuralNetBuilder
             return result.OrderBy(x => x).First();
         }
 
-        internal static INetParameters AdoptValuesOfOtherNetParameters(this INetParameters netParameters, INetParameters other)
+        internal static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
-            netParameters.LayerParametersCollection = other.LayerParametersCollection;
-            netParameters.WeightInitType = other.WeightInitType;
-
-            return netParameters;
+            foreach (var item in source)
+                action(item);
         }
     }
 }

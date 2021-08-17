@@ -7,31 +7,24 @@ namespace NeuralNetBuilder.Builders
     // You can access them from the ConsoleApi, AIDemoUI or use them as Wpf's 'Command-Executes'.
     // They already do or will (soon) provide an event to notify about the (succeeded) data changes.
 
-    public class PathBuilder : NotifierBase
+    public class PathBuilder : InitializerAssistant
     {
         #region fields & ctor
 
-        private readonly Action<string> _onInitializerStatusChanged;
-        private string netParameters, trainerParameters, log, initializedNet, sampleSet, trainedNet;//, sampleSetParameters
-
-        public PathBuilder(Action<string> onInitializerStatusChanged)
-        {
-            // Implement INPC!
-            _onInitializerStatusChanged = onInitializerStatusChanged;
-        }
+        private string netParameters, trainerParameters, log, initializedNet, sampleSet, trainedNet;
 
         #endregion
 
         #region properties
 
-        public string FileName_InitializedNet { get; set; } = "InitializedNet.txt";
-        public string FileName_TrainedNet { get; set; } = "TrainedNet.txt";
-        public string FileName_SampleSet { get; set; } = "Samples.csv";
-        public string FileName_NetParameters { get; set; } = "NetParameters.txt";
-        public string FileName_TrainerParameters { get; set; } = "TrainerParameters.txt";
-        public string FileName_Log { get; set; } = "Log.txt";
-        public string FileName_Prefix { get; set; } = string.Empty;
-        public string FileName_Suffix { get; set; } = string.Empty;
+        public string BasicName_InitializedNet { get; set; } = "InitializedNet.txt";
+        public string BasicName_TrainedNet { get; set; } = "TrainedNet.txt";
+        public string BasicName_SampleSet { get; set; } = "Samples.csv";
+        public string BasicName_NetParameters { get; set; } = "NetParameters.txt";
+        public string BasicName_TrainerParameters { get; set; } = "TrainerParameters.txt";
+        public string BasicName_Log { get; set; } = "Log.txt";
+        public string BasicName_Prefix { get; set; } = string.Empty;
+        public string BasicName_Suffix { get; set; } = string.Empty;
 
         public string General { get; set; } = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\";    // Path.GetTempPath();
         public string NetParameters
@@ -39,7 +32,7 @@ namespace NeuralNetBuilder.Builders
             get
             {
                 if (string.IsNullOrEmpty(netParameters))
-                    return netParameters = Path.Combine(General, FileName_Prefix, FileName_NetParameters + FileName_Suffix);
+                    return netParameters = Path.Combine(General, BasicName_Prefix, BasicName_NetParameters + BasicName_Suffix);
                 else return netParameters;
             }
             set { netParameters = value; }
@@ -49,7 +42,7 @@ namespace NeuralNetBuilder.Builders
             get
             {
                 if (string.IsNullOrEmpty(trainerParameters))
-                    return trainerParameters = Path.Combine(General, FileName_Prefix, FileName_TrainerParameters + FileName_Suffix);
+                    return trainerParameters = Path.Combine(General, BasicName_Prefix, BasicName_TrainerParameters + BasicName_Suffix);
                 else return trainerParameters;
             }
             set { trainerParameters = value; }
@@ -59,7 +52,7 @@ namespace NeuralNetBuilder.Builders
             get
             {
                 if (string.IsNullOrEmpty(log))
-                    return log = Path.Combine(General, FileName_Prefix, FileName_Log + FileName_Suffix);
+                    return log = Path.Combine(General, BasicName_Prefix, BasicName_Log + BasicName_Suffix);
                 else return log;
             }
             set { log = value; }
@@ -69,7 +62,7 @@ namespace NeuralNetBuilder.Builders
             get
             {
                 if (string.IsNullOrEmpty(sampleSet))
-                    return sampleSet = Path.Combine(General, FileName_Prefix, FileName_SampleSet + FileName_Suffix);
+                    return sampleSet = Path.Combine(General, BasicName_Prefix, BasicName_SampleSet + BasicName_Suffix);
                 else return sampleSet;
             }
             set { sampleSet = value; }
@@ -79,7 +72,7 @@ namespace NeuralNetBuilder.Builders
             get
             {
                 if (string.IsNullOrEmpty(initializedNet))
-                    return initializedNet = Path.Combine(General, FileName_Prefix, FileName_InitializedNet + FileName_Suffix);
+                    return initializedNet = Path.Combine(General, BasicName_Prefix, BasicName_InitializedNet + BasicName_Suffix);
                 else return initializedNet;
             }
             set { initializedNet = value; }
@@ -89,7 +82,7 @@ namespace NeuralNetBuilder.Builders
             get
             {
                 if (string.IsNullOrEmpty(trainedNet))
-                    return trainedNet = Path.Combine(General, FileName_Prefix, FileName_TrainedNet + FileName_Suffix);
+                    return trainedNet = Path.Combine(General, BasicName_Prefix, BasicName_TrainedNet + BasicName_Suffix);
                 else return trainedNet;
             }
             set { trainedNet = value; }
@@ -103,24 +96,24 @@ namespace NeuralNetBuilder.Builders
         {
             if (!Directory.Exists(path))
             {
-                _onInitializerStatusChanged("Path not found!");
+                OnStatusChanged("Path not found!");
                 return false;
             }
 
             General = path;
-            _onInitializerStatusChanged("General path is set.");
+            OnStatusChanged("General path is set.");
             UseGeneralPathAndDefaultNames();    // no default names here?
             return true;
         }
         public void SetFileNamePrefix(string prefix)
         {
-            FileName_Prefix = prefix;
-            _onInitializerStatusChanged($"The file name has prefix {prefix} now.");
+            BasicName_Prefix = prefix;
+            OnStatusChanged($"The file name has prefix {prefix} now.");
         }
         public void SetFileNameSuffix(string suffix)
         {
-            FileName_Suffix = suffix;
-            _onInitializerStatusChanged($"The file name has suffix {suffix} now.");
+            BasicName_Suffix = suffix;
+            OnStatusChanged($"The file name has suffix {suffix} now.");
         }
         public void ResetPaths()
         {
@@ -134,17 +127,17 @@ namespace NeuralNetBuilder.Builders
 
             sampleSet = string.Empty;
 
-            _onInitializerStatusChanged($"Path for all files has been reset.");
+            OnStatusChanged($"Path for all files has been reset.");
         }
         public void UseGeneralPathAndDefaultNames()
         {
-            SetNetParametersPath(Path.Combine(General, FileName_Prefix, FileName_NetParameters + FileName_Suffix));
-            SetTrainerParametersPath(Path.Combine(General, FileName_Prefix, FileName_TrainerParameters + FileName_Suffix));
-            SetLogPath(Path.Combine(General, FileName_Prefix, FileName_Log + FileName_Suffix));
-            SetInitializedNetPath(Path.Combine(General, FileName_Prefix, FileName_InitializedNet + FileName_Suffix));
-            SetTrainedNetPath(Path.Combine(General, FileName_Prefix, FileName_TrainedNet + FileName_Suffix));
+            SetNetParametersPath(Path.Combine(General, BasicName_Prefix, BasicName_NetParameters + BasicName_Suffix));
+            SetTrainerParametersPath(Path.Combine(General, BasicName_Prefix, BasicName_TrainerParameters + BasicName_Suffix));
+            SetLogPath(Path.Combine(General, BasicName_Prefix, BasicName_Log + BasicName_Suffix));
+            SetInitializedNetPath(Path.Combine(General, BasicName_Prefix, BasicName_InitializedNet + BasicName_Suffix));
+            SetTrainedNetPath(Path.Combine(General, BasicName_Prefix, BasicName_TrainedNet + BasicName_Suffix));
 
-            SetSampleSetPath(Path.Combine(General, FileName_Prefix, FileName_SampleSet + FileName_Suffix));
+            SetSampleSetPath(Path.Combine(General, BasicName_Prefix, BasicName_SampleSet + BasicName_Suffix));
         }
 
         #region redundant?
@@ -152,32 +145,32 @@ namespace NeuralNetBuilder.Builders
         public void SetInitializedNetPath(string path)
         {
             InitializedNet = path;
-            _onInitializerStatusChanged("Path to the initialized net has been set.");
+            OnStatusChanged("Path to the initialized net has been set.");
         }
         public void SetTrainedNetPath(string path)
         {
             TrainedNet = path;
-            _onInitializerStatusChanged("Path to the trained net has been set.");
+            OnStatusChanged("Path to the trained net has been set.");
         }
         public void SetSampleSetPath(string path)
         {
             SampleSet = path;
-            _onInitializerStatusChanged("Path to the sample set has been set.");
+            OnStatusChanged("Path to the sample set has been set.");
         }
         public void SetNetParametersPath(string path)
         {
             NetParameters = path;
-            _onInitializerStatusChanged("Path to net parameters has been set.");
+            OnStatusChanged("Path to net parameters has been set.");
         }
         public void SetTrainerParametersPath(string path)
         {
             TrainerParameters = path;
-            _onInitializerStatusChanged("Path to trainer parameters has been set.");
+            OnStatusChanged("Path to trainer parameters has been set.");
         }
         public void SetLogPath(string path)
         {
             Log = path;
-            _onInitializerStatusChanged("Path to the log file has been set.");
+            OnStatusChanged("Path to the log file has been set.");
         }
 
         #endregion

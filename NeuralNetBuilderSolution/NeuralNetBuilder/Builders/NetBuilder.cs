@@ -11,7 +11,7 @@ namespace NeuralNetBuilder.Builders
 
     // Unused class ?
 
-    public class NetBuilder : NotifierBase
+    public class NetBuilder : InitializerAssistant
     {
         #region fields & ctor
 

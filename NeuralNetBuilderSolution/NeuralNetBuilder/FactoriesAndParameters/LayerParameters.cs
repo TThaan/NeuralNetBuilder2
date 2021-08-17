@@ -5,7 +5,7 @@ using System.ComponentModel;
 
 namespace NeuralNetBuilder.FactoriesAndParameters
 {
-    public interface ILayerParameters : INotifyPropertyChanged
+    public interface ILayerParameters : INotifyPropertyChanged, INotifyStatusChanged
     {
         int Id { get; set; }
         int NeuronsPerLayer { get; set; }
@@ -17,9 +17,9 @@ namespace NeuralNetBuilder.FactoriesAndParameters
     }
 
     [Serializable]
-    public class LayerParameters : NotifierBase, ILayerParameters
+    public class LayerParameters : InitializerAssistant, ILayerParameters
     {
-        #region fields
+        #region fields & ctor
 
         private int id, neuronsPerLayer;
         float weightMin, weightMax, biasMin, biasMax;
@@ -49,7 +49,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
                 if (neuronsPerLayer != value)
                 {
                     neuronsPerLayer = value;
-                    // OnPropertyChanged();
+                    OnPropertyChanged();
                 }
             }
         }
@@ -110,7 +110,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
                 if (activationType != value)
                 {
                     activationType = value;
-                    // OnPropertyChanged();
+                    OnPropertyChanged();
                 }
             }
         }

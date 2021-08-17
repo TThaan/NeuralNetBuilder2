@@ -5,7 +5,7 @@ using System.ComponentModel;
 
 namespace NeuralNetBuilder.FactoriesAndParameters
 {
-    public interface ITrainerParameters : INotifyPropertyChanged
+    public interface ITrainerParameters : INotifyPropertyChanged, INotifyStatusChanged
     {
         int Epochs { get; set; }
         float LearningRate { get; set; }
@@ -14,7 +14,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
     }
 
     [Serializable]
-    public class TrainerParameters : NotifierBase, ITrainerParameters
+    public class TrainerParameters : InitializerAssistant, ITrainerParameters
     {
         #region fields & ctor
 
@@ -22,21 +22,6 @@ namespace NeuralNetBuilder.FactoriesAndParameters
         private float learningRateChange;
         private float learningRate;
         private CostType costType;
-
-        public TrainerParameters()
-        {
-            //Epochs = 10;
-            //LearningRate = .1f;
-            //LearningRateChange = .9f;
-            //CostType = CostType.SquaredMeanError;
-        }
-        //public TrainerParameters(int epochs, float learningRate, float learningRateChange, CostType costType)
-        //{
-        //    Epochs = epochs;
-        //    LearningRate = learningRate;
-        //    LearningRateChange = learningRateChange;
-        //    CostType = costType;
-        //}
 
         #endregion
 
