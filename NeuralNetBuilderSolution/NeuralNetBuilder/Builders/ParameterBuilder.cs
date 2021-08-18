@@ -67,7 +67,7 @@ namespace NeuralNetBuilder.Builders
             {
                 // No equality check due to potentially reapeated statuses.
                 status = value;
-                base.OnPropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -137,7 +137,7 @@ namespace NeuralNetBuilder.Builders
             LayerParametersCollection.Remove(LayerParametersCollection[layerId]);
             
             if (LayerParametersCollection.Count > 2)
-                Status = $"Layer deleted. (Id = {layerId}).";
+                Status = $"Layer {layerId} deleted.";
             else
                 Status = $"You must not delete the last standing layer.";
             
@@ -148,17 +148,16 @@ namespace NeuralNetBuilder.Builders
             LayerParametersCollection.Move(
             layerId, layerId > 0 ? layerId - 1 : 0);
             ResetLayersIndeces();
-            Status = $"Layer moved left. (OldId = {layerId}).";
+            Status = $"Switched layers {layerId} and {layerId - 1}.";
         }
         public void MoveLayerRight(int layerId)
         {
             LayerParametersCollection.Move(
             layerId, layerId < NetParameters.LayerParametersCollection.Count - 1 ? layerId + 1 : 0);
             ResetLayersIndeces();
-            Status = $"Layer moved right. (OldId = {layerId}).";
+            Status = $"Switched layers {layerId} and {layerId + 1}.";
         }
 
-        // ta: Changing N or just add/remove layers?
         public void SetNeuronsAtLayer(int layerId, int neurons)
         {
             LayerParametersCollection[layerId].NeuronsPerLayer = neurons;
@@ -167,7 +166,7 @@ namespace NeuralNetBuilder.Builders
         public void SetActivationTypeAtLayer(int layerId, int activationType)
         {
             LayerParametersCollection[layerId].ActivationType = (ActivationType)activationType;
-            Status = $"Activation type of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.";
+            Status = $"Activation type of layer {layerId} = {(ActivationType)activationType}.";
         }
         public void SetWeightMaxAtLayer(int layerId, float weightMax)
         {
@@ -197,22 +196,22 @@ namespace NeuralNetBuilder.Builders
         public void SetCostType(int costType)
         {
             TrainerParameters.CostType = (CostType)costType;
-            Status = $"{TrainerParameters}.{TrainerParameters.CostType} has been set to {TrainerParameters.CostType}.";
+            Status = $"{nameof(TrainerParameters.CostType)} has been set to {TrainerParameters.CostType}.";
         }
         public void SetLearningRateChange(float learningRateChange)
         {
             TrainerParameters.LearningRateChange = learningRateChange;
-            Status = $"{TrainerParameters}.{TrainerParameters.LearningRateChange} has been set to {TrainerParameters.LearningRateChange}.";
+            Status = $"{nameof(TrainerParameters.LearningRateChange)} has been set to {TrainerParameters.LearningRateChange}.";
         }
         public void SetLearningRate(float learningRate)
         {
             TrainerParameters.LearningRate = learningRate;
-            Status = $"{TrainerParameters}.{TrainerParameters.LearningRate} has been set to {TrainerParameters.LearningRate}.";
+            Status = $"{nameof(TrainerParameters.LearningRate)} has been set to {TrainerParameters.LearningRate}.";
         }
         public void SetEpochs(int epochs)
         {
             TrainerParameters.Epochs = epochs;
-            Status = $"{TrainerParameters}.{TrainerParameters.Epochs} has been set to {TrainerParameters.Epochs}.";
+            Status = $"{nameof(TrainerParameters.Epochs)} has been set to {TrainerParameters.Epochs}.";
         }
 
         #endregion

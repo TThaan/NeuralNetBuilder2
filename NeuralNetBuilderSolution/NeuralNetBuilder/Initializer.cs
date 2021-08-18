@@ -28,12 +28,15 @@ namespace NeuralNetBuilder
             ParameterBuilder = new ParameterBuilder();                      // DI?
             ParameterBuilder.NetParameters = new NetParameters();           // DI?
             ParameterBuilder.TrainerParameters = new TrainerParameters();   // DI?
+            PathBuilder = new PathBuilder();                                // DI?
 
-            Trainer = new Trainer();        // DI?
-            Net = new Net();                // DI?
-            SampleSet = new SampleSet();    // DI?
+            Trainer = new Trainer();            // DI?
+            Net = new Net();                    // DI?
+            SampleSet = new SampleSet();        // DI?
 
             RegisterPropertyChanged();
+
+            Status = "Initializer created.";
         }
 
         #region helpers
@@ -43,6 +46,7 @@ namespace NeuralNetBuilder
             ParameterBuilder.NetParameters.PropertyChanged += InitializerAssistant_PropertyChanged;
             ParameterBuilder.TrainerParameters.PropertyChanged += InitializerAssistant_PropertyChanged;
             ParameterBuilder.PropertyChanged += InitializerAssistant_PropertyChanged;
+            PathBuilder.PropertyChanged += InitializerAssistant_PropertyChanged;
         }
 
         #endregion
@@ -51,6 +55,7 @@ namespace NeuralNetBuilder
 
         #region properties
 
+        public PathBuilder PathBuilder { get; }
         public ParameterBuilder ParameterBuilder { get; }
         public ISampleSet SampleSet { get; set; }
         public INet Net { get; set; }
@@ -224,12 +229,16 @@ namespace NeuralNetBuilder
         public bool IsPropertyChangedNull => propertyChanged == null;
         public void InitializerAssistant_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            //if (e.PropertyName == nameof(Status))
-            //    OnStatusChanged(e.PropertyName);
-            //else 
-            if (e.PropertyName == nameof(ParameterBuilder.NetParameters))
+            if (e.PropertyName == nameof(Status))
+            {
+                // Better use interface including prop 'Status' for Status holders? Or bring back separate StatusChangedEvent.
+                Status = ((dynamic)sender).Status;
+                return;
+            }
+            else if (e.PropertyName == nameof(ParameterBuilder.NetParameters) ||
+                e.PropertyName == nameof(ParameterBuilder.TrainerParameters))
                 RegisterPropertyChanged();
-
+            
             OnPropertyChanged(e.PropertyName);
         }
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
