@@ -17,22 +17,130 @@ namespace NeuralNetBuilder.Builders
     {
         #region fields & ctor
 
-        private string netParameters, trainerParameters, log, initializedNet, sampleSet, trainedNet, status;
+        private string netParameters, trainerParameters, log, initializedNet, sampleSet, trainedNet, status,
+            basicName_InitializedNet = "InitializedNet.txt",
+            basicName_TrainedNet = "TrainedNet.txt",
+            basicName_SampleSet = "Samples.csv",
+            basicName_NetParameters = "NetParameters.txt",
+            basicName_TrainerParameters = "TrainerParameters.txt",
+            basicName_Log = "Log.txt",
+            basicName_Prefix = string.Empty,
+            basicName_Suffix = string.Empty,
+            general = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\";
 
         #endregion
 
         #region properties
 
-        public string BasicName_InitializedNet { get; set; } = "InitializedNet.txt";
-        public string BasicName_TrainedNet { get; set; } = "TrainedNet.txt";
-        public string BasicName_SampleSet { get; set; } = "Samples.csv";
-        public string BasicName_NetParameters { get; set; } = "NetParameters.txt";
-        public string BasicName_TrainerParameters { get; set; } = "TrainerParameters.txt";
-        public string BasicName_Log { get; set; } = "Log.txt";
-        public string BasicName_Prefix { get; set; } = string.Empty;
-        public string BasicName_Suffix { get; set; } = string.Empty;
+        public string BasicName_InitializedNet
+        {
+            get { return basicName_InitializedNet; }
+            set
+            {
+                if (basicName_InitializedNet != value)
+                {
+                    status = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        public string BasicName_TrainedNet
+        {
+            get { return basicName_TrainedNet; }
+            set
+            {
+                if (basicName_TrainedNet != value)
+                {
+                    status = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        public string BasicName_SampleSet
+        {
+            get { return basicName_SampleSet; }
+            set
+            {
+                if (basicName_SampleSet != value)
+                {
+                    status = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        public string BasicName_NetParameters
+        {
+            get { return basicName_NetParameters; }
+            set
+            {
+                if (basicName_NetParameters != value)
+                {
+                    status = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        public string BasicName_TrainerParameters
+        {
+            get { return basicName_TrainerParameters; }
+            set
+            {
+                if (basicName_TrainerParameters != value)
+                {
+                    status = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        public string BasicName_Log
+        {
+            get { return basicName_Log; }
+            set
+            {
+                if (basicName_Log != value)
+                {
+                    status = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        public string BasicName_Prefix
+        {
+            get { return basicName_Prefix; }
+            set
+            {
+                if (basicName_Prefix != value)
+                {
+                    status = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        public string BasicName_Suffix
+        {
+            get { return basicName_Suffix; }
+            set
+            {
+                if (basicName_Suffix != value)
+                {
+                    status = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
-        public string General { get; set; } = @"C:\Users\Jan_PC\Documents\_NeuralNetApp\Saves\";    // Path.GetTempPath();
+        public string General
+        {
+            get { return general; }
+            set
+            {
+                if (general != value)
+                {
+                    status = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         public string NetParameters
         {
             get
@@ -41,7 +149,14 @@ namespace NeuralNetBuilder.Builders
                     return netParameters = Path.Combine(General, BasicName_Prefix, BasicName_NetParameters + BasicName_Suffix);
                 else return netParameters;
             }
-            set { netParameters = value; }
+            set 
+            {
+                if (netParameters != value)
+                {
+                    netParameters = value;
+                    OnPropertyChanged();
+                }
+            }
         }
         public string TrainerParameters
         {
@@ -51,7 +166,14 @@ namespace NeuralNetBuilder.Builders
                     return trainerParameters = Path.Combine(General, BasicName_Prefix, BasicName_TrainerParameters + BasicName_Suffix);
                 else return trainerParameters;
             }
-            set { trainerParameters = value; }
+            set 
+            {
+                if (trainerParameters != value)
+                {
+                    trainerParameters = value;
+                    OnPropertyChanged();
+                }
+            }
         }
         public string Log
         {
@@ -61,7 +183,14 @@ namespace NeuralNetBuilder.Builders
                     return log = Path.Combine(General, BasicName_Prefix, BasicName_Log + BasicName_Suffix);
                 else return log;
             }
-            set { log = value; }
+            set 
+            {
+                if (log != value)
+                {
+                    log = value;
+                    OnPropertyChanged();
+                }
+            }
         }
         public string SampleSet
         {
@@ -71,7 +200,14 @@ namespace NeuralNetBuilder.Builders
                     return sampleSet = Path.Combine(General, BasicName_Prefix, BasicName_SampleSet + BasicName_Suffix);
                 else return sampleSet;
             }
-            set { sampleSet = value; }
+            set 
+            {
+                if (sampleSet != value)
+                {
+                    sampleSet = value;
+                    OnPropertyChanged();
+                }
+            }
         }
         public string InitializedNet
         {
@@ -81,7 +217,14 @@ namespace NeuralNetBuilder.Builders
                     return initializedNet = Path.Combine(General, BasicName_Prefix, BasicName_InitializedNet + BasicName_Suffix);
                 else return initializedNet;
             }
-            set { initializedNet = value; }
+            set 
+            {
+                if (initializedNet != value)
+                {
+                    initializedNet = value;
+                    OnPropertyChanged();
+                }
+            }
         }
         public string TrainedNet
         {
@@ -91,7 +234,14 @@ namespace NeuralNetBuilder.Builders
                     return trainedNet = Path.Combine(General, BasicName_Prefix, BasicName_TrainedNet + BasicName_Suffix);
                 else return trainedNet;
             }
-            set { trainedNet = value; }
+            set 
+            {
+                if (trainedNet != value)
+                {
+                    trainedNet = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         public string Status
@@ -102,6 +252,7 @@ namespace NeuralNetBuilder.Builders
             }
             set 
             {
+                // No equality check here since repeated identic statuses are possible.
                 status = value;
                 OnPropertyChanged();
             }
