@@ -26,7 +26,7 @@ namespace NeuralNetBuilder
             ParameterBuilder.TrainerParameters = new TrainerParameters();   // DI?
 
             // Do I need INotifyStatusChanged only in Builders?
-            RegisterStatusChanged();
+            // RegisterStatusChanged();
 
             // Do I need IPropertyStatusChanged only in Builders?
             RegisterPropertyChanged();
@@ -44,12 +44,12 @@ namespace NeuralNetBuilder
 
         #region helpers
 
-        private void RegisterStatusChanged()
-        {
-            ParameterBuilder.StatusChanged += InitializerAssistant_StatusChanged;
-            ParameterBuilder.TrainerParameters.StatusChanged += InitializerAssistant_StatusChanged;
-            ParameterBuilder.NetParameters.StatusChanged += InitializerAssistant_StatusChanged;
-        }
+        //private void RegisterStatusChanged()
+        //{
+        //    ParameterBuilder.StatusChanged += InitializerAssistant_StatusChanged;
+        //    ParameterBuilder.TrainerParameters.StatusChanged += InitializerAssistant_StatusChanged;
+        //    ParameterBuilder.NetParameters.StatusChanged += InitializerAssistant_StatusChanged;
+        //}
         private void RegisterPropertyChanged()
         {
             ParameterBuilder.NetParameters.PropertyChanged += InitializerAssistant_PropertyChanged;
@@ -279,7 +279,8 @@ namespace NeuralNetBuilder
         {
             if (e.PropertyName == nameof(ParameterBuilder.NetParameters))
                 RegisterPropertyChanged();
-            // else if (e.PropertyName == nameof(ParameterBuilder.NetParameters.LayerParametersCollection))
+            else if (e.PropertyName == nameof(ParameterBuilder.Status))
+                throw new NotImplementedException();
 
                 OnPropertyChanged(e.PropertyName);
         }

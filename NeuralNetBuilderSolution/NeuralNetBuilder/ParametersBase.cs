@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace NeuralNetBuilder
 {
-    public class InitializerAssistant : INotifyPropertyChanged, INotifyStatusChanged
+    public class ParametersBase : INotifyPropertyChanged//, INotifyStatusChanged
     {
         #region INotifyPropertyChanged
 
@@ -29,26 +29,26 @@ namespace NeuralNetBuilder
 
         #endregion
 
-        #region INotifyStatusChanged
+        //#region INotifyStatusChanged
 
-        private event StatusChangedEventHandler statusChanged;
-        public event StatusChangedEventHandler StatusChanged
-        {
-            add
-            {
-                if (statusChanged == null || !statusChanged.GetInvocationList().Contains(value))
-                    statusChanged += value;
-                // else Log when debugging.
+        //private event StatusChangedEventHandler statusChanged;
+        //public event StatusChangedEventHandler StatusChanged
+        //{
+        //    add
+        //    {
+        //        if (statusChanged == null || !statusChanged.GetInvocationList().Contains(value))
+        //            statusChanged += value;
+        //        // else Log when debugging.
 
-            }
-            remove { statusChanged -= value; }
-        }
-        public bool IsStatusChangedNull => statusChanged == null;
-        protected virtual void OnStatusChanged([CallerMemberName] string info = null)
-        {
-            statusChanged?.Invoke(this, new StatusChangedEventArgs(info));
-        }
+        //    }
+        //    remove { statusChanged -= value; }
+        //}
+        //public bool IsStatusChangedNull => statusChanged == null;
+        //protected virtual void OnStatusChanged([CallerMemberName] string info = null)
+        //{
+        //    statusChanged?.Invoke(this, new StatusChangedEventArgs(info));
+        //}
 
-        #endregion
+        //#endregion
     }
 }

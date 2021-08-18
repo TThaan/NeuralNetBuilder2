@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 
 namespace NeuralNetBuilder.Builders
 {
-    // Builders provide methods to interact with the data classes (all pocos?).
+    // Builders provide methods to create/load and interact with the data classes (all pocos?).
     // You can access them from the ConsoleApi, AIDemoUI or use them as Wpf's 'Command-Executes'.
     // They already do or will (soon) provide an event to notify about the (succeeded) data changes.
 
     // Task: Add specific exception messages or remove them at all!
 
-    public class ParameterBuilder : InitializerAssistant
+    public class ParameterBuilder : ParametersBase
     {
         #region fields & ctor
 
@@ -24,6 +24,8 @@ namespace NeuralNetBuilder.Builders
 
         private INetParameters netParameters;
         private ITrainerParameters trainerParameters;
+
+        private string status;
 
         #endregion
 
@@ -58,18 +60,29 @@ namespace NeuralNetBuilder.Builders
         public IEnumerable<ActivationType> ActivationTypes => activationTypes ??
             (activationTypes = Enum.GetValues(typeof(ActivationType)).ToList<ActivationType>());
 
+        public string Status 
+        {
+            get { return status; }
+            set
+            {
+                // No equality check due to potentially reapeated statuses.
+                status = value;
+                base.OnPropertyChanged();
+            }
+        }
+
         #endregion
 
         #region methods
-        
-        #region methods: Change NetParameters
 
+        #region methods: Change NetParameters
+        
         public void SetWeightInitType(int weightInitType)
         {
             try
             {
                 NetParameters.WeightInitType = (WeightInitType)weightInitType;
-                OnStatusChanged($"WeightInitType = {NetParameters.WeightInitType}.");
+                Status = $"WeightInitType = {NetParameters.WeightInitType}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -79,8 +92,8 @@ namespace NeuralNetBuilder.Builders
             {
                 // WeightMax_Global = weightMax;
                 foreach (var lp in NetParameters.LayerParametersCollection)
-                lp.WeightMax = weightMax;            
-                OnStatusChanged($"Global WeightMax = {weightMax}.");
+                lp.WeightMax = weightMax;
+                Status = $"Global WeightMax = {weightMax}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -91,7 +104,7 @@ namespace NeuralNetBuilder.Builders
                 //WeightMin_Global = weightMin;
                 foreach (var lp in NetParameters.LayerParametersCollection)
                 lp.WeightMax = weightMin;
-                OnStatusChanged($"Global WeightMin = {weightMin}.");
+                Status = $"Global WeightMin = {weightMin}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -102,7 +115,7 @@ namespace NeuralNetBuilder.Builders
                 //BiasMax_Global = biasMax;
                 foreach (var lp in NetParameters.LayerParametersCollection)
                 lp.WeightMax = biasMax;
-                OnStatusChanged($"Global BiasMax = {biasMax}.");
+                Status = $"Global BiasMax = {biasMax}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -113,7 +126,7 @@ namespace NeuralNetBuilder.Builders
                 //BiasMin_Global = biasMin;
                 foreach (var lp in NetParameters.LayerParametersCollection)
                 lp.WeightMax = biasMin;
-                OnStatusChanged($"Global BiasMin = {biasMin}.");
+                Status = $"Global BiasMin = {biasMin}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -139,7 +152,7 @@ namespace NeuralNetBuilder.Builders
                 LayerParametersCollection.Insert(precedingLayerId + 1, newLayerParameters);
                 ResetLayersIndeces();
 
-                OnStatusChanged($"New layer added. (Id = {precedingLayerId + 1}).");
+                Status = $"New layer added. (Id = {precedingLayerId + 1}).";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -150,11 +163,11 @@ namespace NeuralNetBuilder.Builders
             {
                 if (LayerParametersCollection.Count > 2)
                 {
-                    OnStatusChanged($"Layer deleted. (Id = {layerId}).");
+                    Status = $"Layer deleted. (Id = {layerId}).";
                 }
                 else
                 {
-                    OnStatusChanged($"You must not delete the last standing layer.");
+                    Status = $"You must not delete the last standing layer.";
                 }
                 ResetLayersIndeces();
             }
@@ -167,7 +180,7 @@ namespace NeuralNetBuilder.Builders
                 LayerParametersCollection.Move(
                 layerId, layerId > 0 ? layerId - 1 : 0);
                 ResetLayersIndeces();
-                OnStatusChanged($"Layer moved left. (OldId = {layerId}).");
+                Status = $"Layer moved left. (OldId = {layerId}).";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -178,7 +191,7 @@ namespace NeuralNetBuilder.Builders
                 LayerParametersCollection.Move(
                 layerId, layerId < NetParameters.LayerParametersCollection.Count - 1 ? layerId + 1 : 0);
                 ResetLayersIndeces();
-                OnStatusChanged($"Layer moved right. (OldId = {layerId}).");
+                Status = $"Layer moved right. (OldId = {layerId}).";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -189,7 +202,7 @@ namespace NeuralNetBuilder.Builders
             try
             {
                 LayerParametersCollection[layerId].NeuronsPerLayer = neurons;
-                OnStatusChanged($"Amount of neurons in layer {layerId} = {LayerParametersCollection[layerId].NeuronsPerLayer}.");
+                Status = $"Amount of neurons in layer {layerId} = {LayerParametersCollection[layerId].NeuronsPerLayer}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -198,7 +211,7 @@ namespace NeuralNetBuilder.Builders
             try
             {
                 LayerParametersCollection[layerId].ActivationType = (ActivationType)activationType;
-                OnStatusChanged($"Activation type of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.");
+                Status = $"Activation type of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -207,7 +220,7 @@ namespace NeuralNetBuilder.Builders
             try
             {
                 LayerParametersCollection[layerId].WeightMax = weightMax;
-                OnStatusChanged($"WeightMax of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.");
+                Status = $"WeightMax of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -216,7 +229,7 @@ namespace NeuralNetBuilder.Builders
             try
             {
                 LayerParametersCollection[layerId].WeightMin = weightMin;
-                OnStatusChanged($"WeightMin of layer {layerId} = {LayerParametersCollection[layerId].WeightMin}.");
+                Status = $"WeightMin of layer {layerId} = {LayerParametersCollection[layerId].WeightMin}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -225,7 +238,7 @@ namespace NeuralNetBuilder.Builders
             try
             {
                 LayerParametersCollection[layerId].BiasMax = biasMax;
-                OnStatusChanged($"BiasMax of layer {layerId} = {LayerParametersCollection[layerId].BiasMax}.");
+                Status = $"BiasMax of layer {layerId} = {LayerParametersCollection[layerId].BiasMax}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -234,7 +247,7 @@ namespace NeuralNetBuilder.Builders
             try
             {
                 LayerParametersCollection[layerId].BiasMin = biasMin;
-                OnStatusChanged($"BiasMin of layer {layerId} = {LayerParametersCollection[layerId].BiasMin}.");
+                Status = $"BiasMin of layer {layerId} = {LayerParametersCollection[layerId].BiasMin}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -248,7 +261,7 @@ namespace NeuralNetBuilder.Builders
             try
             {
                 TrainerParameters.CostType = (CostType)costType;
-                OnStatusChanged($"{TrainerParameters}.{TrainerParameters.CostType} has been set to {TrainerParameters.CostType}.");
+                Status = $"{TrainerParameters}.{TrainerParameters.CostType} has been set to {TrainerParameters.CostType}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -257,7 +270,7 @@ namespace NeuralNetBuilder.Builders
             try
             {
                 TrainerParameters.LearningRateChange = learningRateChange;
-                OnStatusChanged($"{TrainerParameters}.{TrainerParameters.LearningRateChange} has been set to {TrainerParameters.LearningRateChange}.");
+                Status = $"{TrainerParameters}.{TrainerParameters.LearningRateChange} has been set to {TrainerParameters.LearningRateChange}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -266,7 +279,7 @@ namespace NeuralNetBuilder.Builders
             try
             {
                 TrainerParameters.LearningRate = learningRate;
-                OnStatusChanged($"{TrainerParameters}.{TrainerParameters.LearningRate} has been set to {TrainerParameters.LearningRate}.");
+                Status = $"{TrainerParameters}.{TrainerParameters.LearningRate} has been set to {TrainerParameters.LearningRate}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -275,7 +288,7 @@ namespace NeuralNetBuilder.Builders
             try
             {
                 TrainerParameters.Epochs = epochs;
-                OnStatusChanged($"{TrainerParameters}.{TrainerParameters.Epochs} has been set to {TrainerParameters.Epochs}.");
+                Status = $"{TrainerParameters}.{TrainerParameters.Epochs} has been set to {TrainerParameters.Epochs}.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -288,9 +301,9 @@ namespace NeuralNetBuilder.Builders
         {
             try
             {
-                OnStatusChanged("Loading net parameters from file, please wait...");
+                Status = "Loading net parameters from file, please wait...";
                 NetParameters = await Import.LoadAsJsonAsync<NetParameters>(fileName);
-                OnStatusChanged("Successfully loaded net parameters.");
+                Status = "Successfully loaded net parameters.";
             }
             catch (JsonReaderException e) { throw new ArgumentException($"Couldn't read the Json file.\nDetails: {e.Message}"); }
             catch (Exception e) { ThrowFormattedException(e); }
@@ -299,9 +312,9 @@ namespace NeuralNetBuilder.Builders
         {
             try
             {
-                OnStatusChanged("Loading trainer parameters from file, please wait...");                    
+                Status = "Loading trainer parameters from file, please wait...";                    
                 TrainerParameters = await Import.LoadAsJsonAsync<TrainerParameters>(path);
-                OnStatusChanged("Successfully loaded trainer parameters.");
+                Status = "Successfully loaded trainer parameters.";
             }
             catch (JsonReaderException e) { throw new ArgumentException($"Couldn't read the Json file.\nDetails: {e.Message}"); }
             catch (Exception e) { ThrowFormattedException(e); }
@@ -311,9 +324,9 @@ namespace NeuralNetBuilder.Builders
         {
             try
             {
-                OnStatusChanged("Saving net parameters, please wait...");
+                Status = "Saving net parameters, please wait...";
                 await Export.SaveAsJsonAsync(NetParameters, path, formatting, true);
-                OnStatusChanged("Successfully saved net parameters.");
+                Status = "Successfully saved net parameters.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }
@@ -321,9 +334,9 @@ namespace NeuralNetBuilder.Builders
         {
             try
             {
-                OnStatusChanged("Saving trainer parameters, please wait...");
+                Status = "Saving trainer parameters, please wait...";
                 await Export.SaveAsJsonAsync(TrainerParameters, path, formatting, true);
-                OnStatusChanged("Successfully saved trainer parameters.");
+                Status = "Successfully saved trainer parameters.";
             }
             catch (Exception e) { ThrowFormattedException(e); }
         }

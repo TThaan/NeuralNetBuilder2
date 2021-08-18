@@ -5,7 +5,7 @@ using System.ComponentModel;
 
 namespace NeuralNetBuilder.FactoriesAndParameters
 {
-    public interface ILayerParameters : INotifyPropertyChanged, INotifyStatusChanged
+    public interface ILayerParameters : INotifyPropertyChanged//, INotifyStatusChanged
     {
         int Id { get; set; }
         int NeuronsPerLayer { get; set; }
@@ -17,7 +17,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
     }
 
     [Serializable]
-    public class LayerParameters : InitializerAssistant, ILayerParameters
+    public class LayerParameters : ParametersBase, ILayerParameters
     {
         #region fields & ctor
 

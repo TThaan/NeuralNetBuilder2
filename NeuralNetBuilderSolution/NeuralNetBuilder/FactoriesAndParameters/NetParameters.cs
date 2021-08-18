@@ -7,16 +7,16 @@ using System.ComponentModel;
 
 namespace NeuralNetBuilder.FactoriesAndParameters
 {
-    public interface INetParameters : INotifyPropertyChanged, INotifyStatusChanged
+    public interface INetParameters : INotifyPropertyChanged//, INotifyStatusChanged
     {
         ObservableCollection<ILayerParameters> LayerParametersCollection { get; set; }
         WeightInitType WeightInitType { get; set; }
     }
 
     [Serializable]
-    public class NetParameters : InitializerAssistant, INetParameters
+    public class NetParameters : ParametersBase, INetParameters
     {
-        #region fields & ctor
+        #region fields
 
         private ObservableCollection<ILayerParameters> layerParametersCollection = new ObservableCollection<ILayerParameters>();
         private WeightInitType weightInitType = WeightInitType.None;
