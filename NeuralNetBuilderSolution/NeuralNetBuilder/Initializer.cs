@@ -17,9 +17,11 @@ namespace NeuralNetBuilder
     // wa: global parameters? Or in NetParameters?
 
     // Remove INSC and implement property 'Status' like in ParameterBuilder?
-    public class Initializer : INotifyPropertyChanged, INotifyStatusChanged
+    public class Initializer : INotifyPropertyChanged//, INotifyStatusChanged
     {
         #region fields & ctor
+
+        private string status;
 
         public Initializer()
         {
@@ -54,8 +56,19 @@ namespace NeuralNetBuilder
         public INet Net { get; set; }
         public INet TrainedNet { get; set; }
         public ITrainer Trainer { get; set; }
-        public bool IsLogged { get; set; }
+        public bool IsLogged { get; set; }  // INPC
         public string LogName { get; set; } //?
+
+        public string Status
+        {
+            get { return status; }
+            set
+            {
+                // No equality check due to potentially reapeated statuses.
+                status = value;
+                OnPropertyChanged();
+            }
+        }
 
         #endregion
 
@@ -73,10 +86,10 @@ namespace NeuralNetBuilder
             if (shuffle)
                 await sampleSet.TrainSet.ShuffleAsync();
 
-            OnStatusChanged($"\n            Training, please wait...\n");
+            Status = $"\n            Training, please wait...\n";
             await Trainer.TrainAsync(shuffle, IsLogged ? logFileName : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
             TrainedNet = Trainer.TrainedNet?.GetCopy();
-            OnStatusChanged($"\n            Finished training.\n");
+            Status = $"\n            Finished training.\n";
         }
         public async Task CreateNetAsync(bool appendLabelsLayer = false)
         {
@@ -86,7 +99,7 @@ namespace NeuralNetBuilder
             if (appendLabelsLayer)
             {
                 if (SampleSet == null || SampleSet.TrainSet == null || SampleSet.TestSet == null)
-                    OnStatusChanged("You need a sample set (incl a train set and a test set) to append a default labels layer!");
+                    Status = "You need a sample set (incl a train set and a test set) to append a default labels layer!";
 
                 // to NetParametersFactory? Do I want labels layer parameters (in net parameters) or only the layer in the net?
                 var labelsLayer = new LayerParameters
@@ -105,9 +118,9 @@ namespace NeuralNetBuilder
             
             await Task.Run(() =>
             {
-                OnStatusChanged("Creating net, please wait...");
+                Status = "Creating net, please wait...";
                 Net = NetFactory.CreateNet(ParameterBuilder.NetParameters);  // as async method?
-                OnStatusChanged("Successfully created net.");
+                Status = "Successfully created net.";
             });
         }
         public async Task CreateTrainerAsync()
@@ -121,37 +134,37 @@ namespace NeuralNetBuilder
 
             await Task.Run(() =>
             {
-                OnStatusChanged("Createing trainer, please wait...");
+                Status = "Createing trainer, please wait...";
                 Trainer.Epochs = ParameterBuilder.TrainerParameters.Epochs;
                 Trainer.LearningRate = ParameterBuilder.TrainerParameters.LearningRate;
                 Trainer.LearningRateChange = ParameterBuilder.TrainerParameters.LearningRateChange;
                 Trainer.CostType = ParameterBuilder.TrainerParameters.CostType;
                 Trainer.OriginalNet = Net.GetCopy();
                 Trainer.SampleSet = SampleSet;
-                OnStatusChanged("Successfully created trainer.");
+                Status = "Successfully created trainer.";
             });
         }
         public async Task SaveInitializedNetAsync(string fileName)
         {
-            OnStatusChanged("Saving initialized net, please wait...");
+            Status = "Saving initialized net, please wait...";
 
             var jsonString = JsonConvert.SerializeObject(Net, Formatting.Indented);
             await File.AppendAllTextAsync(fileName, jsonString);
 
-            OnStatusChanged("Successfully saved initialized net.");
+            Status = "Successfully saved initialized net.";
         }
         public async Task SaveTrainedNetAsync(string fileName)
         {
-            OnStatusChanged("Saving trained net, please wait...");
+            Status = "Saving trained net, please wait...";
 
             var jsonString = JsonConvert.SerializeObject(TrainedNet, Formatting.Indented);
             await File.AppendAllTextAsync(fileName, jsonString);
 
-            OnStatusChanged("Successfully saved trained net.");
+            Status = "Successfully saved trained net.";
         }
         public async Task LoadNetAsync(string fileName)
         {
-            OnStatusChanged("Loading initialized net from file, please wait...");
+            Status = "Loading initialized net from file, please wait...";
             var jsonString = await File.ReadAllTextAsync(fileName);
 
             dynamic dynamicNet = JObject.Parse(jsonString);
@@ -167,11 +180,11 @@ namespace NeuralNetBuilder
 
             Net = JsonConvert.DeserializeObject<Net>(jsonString);
             Net.Layers = layers;
-            OnStatusChanged("Successfully loaded initialized net.");
+            Status = "Successfully loaded initialized net.";
         }
         public async Task LoadTrainedNetAsync(string fileName)
         {
-            OnStatusChanged("Loading trained net from file, please wait...");
+            Status = "Loading trained net from file, please wait...";
             var jsonString = await File.ReadAllTextAsync(fileName);
 
             dynamic dynamicNet = JObject.Parse(jsonString);
@@ -187,7 +200,7 @@ namespace NeuralNetBuilder
 
             TrainedNet = JsonConvert.DeserializeObject<Net>(jsonString);
             Net.Layers = layers;
-            OnStatusChanged("Successfully loaded trained net.");
+            Status = "Successfully loaded trained net.";
         }
 
         // Set IsLogged and Logname ?
@@ -211,12 +224,13 @@ namespace NeuralNetBuilder
         public bool IsPropertyChangedNull => propertyChanged == null;
         public void InitializerAssistant_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
+            //if (e.PropertyName == nameof(Status))
+            //    OnStatusChanged(e.PropertyName);
+            //else 
             if (e.PropertyName == nameof(ParameterBuilder.NetParameters))
                 RegisterPropertyChanged();
-            else if (e.PropertyName == nameof(ParameterBuilder.Status))
-                throw new NotImplementedException();
 
-                OnPropertyChanged(e.PropertyName);
+            OnPropertyChanged(e.PropertyName);
         }
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
@@ -225,30 +239,30 @@ namespace NeuralNetBuilder
 
         #endregion
 
-        #region INotifyStatusChanged
+        //#region INotifyStatusChanged
 
-        private event StatusChangedEventHandler statusChanged;
-        public event StatusChangedEventHandler StatusChanged
-        {
-            add
-            {
-                if (statusChanged == null || !statusChanged.GetInvocationList().Contains(value))
-                    statusChanged += value;
-                // else Log when debugging.
+        //private event StatusChangedEventHandler statusChanged;
+        //public event StatusChangedEventHandler StatusChanged
+        //{
+        //    add
+        //    {
+        //        if (statusChanged == null || !statusChanged.GetInvocationList().Contains(value))
+        //            statusChanged += value;
+        //        // else Log when debugging.
 
-            }
-            remove { statusChanged -= value; }
-        }
-        public bool IsStatusChangedNull => statusChanged == null;
-        public void InitializerAssistant_StatusChanged(object sender, StatusChangedEventArgs e)
-        {
-                OnStatusChanged(e.Info);
-        }
-        protected virtual void OnStatusChanged([CallerMemberName] string propertyName = null)
-        {
-            statusChanged?.Invoke(this, new StatusChangedEventArgs(propertyName));
-        }
+        //    }
+        //    remove { statusChanged -= value; }
+        //}
+        //public bool IsStatusChangedNull => statusChanged == null;
+        //public void InitializerAssistant_StatusChanged(object sender, StatusChangedEventArgs e)
+        //{
+        //        OnStatusChanged(e.Info);
+        //}
+        //protected virtual void OnStatusChanged([CallerMemberName] string propertyName = null)
+        //{
+        //    statusChanged?.Invoke(this, new StatusChangedEventArgs(propertyName));
+        //}
 
-        #endregion
+        //#endregion
     }
 }

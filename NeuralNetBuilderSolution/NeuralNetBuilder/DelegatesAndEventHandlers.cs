@@ -4,29 +4,29 @@ namespace NeuralNetBuilder
 {
     // public delegate void OnPropertyChangedDelegate(string propertyName = "");
 
-    public delegate void StatusChangedEventHandler(object sender, StatusChangedEventArgs e);
+    //public delegate void StatusChangedEventHandler(object sender, StatusChangedEventArgs e);
     public delegate void TrainerStatusChangedEventHandler(object sender, TrainerStatusChangedEventArgs e);
     public delegate void InitializerStatusChangedEventHandler(object sender, InitializerStatusChangedEventArgs e);
 
-    public class StatusChangedEventArgs : EventArgs
-    {
-        #region fields & ctor
+    //public class StatusChangedEventArgs : EventArgs
+    //{
+    //    #region fields & ctor
 
-        private readonly string _info;
+    //    private readonly string _info;
 
-        public StatusChangedEventArgs(string info)
-        {
-            _info = info;
-        }
+    //    public StatusChangedEventArgs(string info)
+    //    {
+    //        _info = info;
+    //    }
 
-        #endregion
+    //    #endregion
 
-        #region public
+    //    #region public
 
-        public string Info => _info;
+    //    public string Info => _info;
 
-        #endregion
-    }
+    //    #endregion
+    //}
     public class TrainerStatusChangedEventArgs : EventArgs
     {
         #region fields & ctor
