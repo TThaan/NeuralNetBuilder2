@@ -32,6 +32,7 @@ namespace NeuralNetBuilder.Builders
 
         #region properties
 
+        // No INPC for basic names needed?
         public string BasicName_InitializedNet
         {
             get { return basicName_InitializedNet; }
@@ -129,6 +130,7 @@ namespace NeuralNetBuilder.Builders
             }
         }
 
+        // Only actual file names need INPC?
         public string General
         {
             get { return general; }

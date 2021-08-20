@@ -1,4 +1,5 @@
 ﻿using DeepLearningDataProvider;
+using DeepLearningDataProvider.SampleSetExtensionMethods;
 using NeuralNetBuilder.Builders;
 using NeuralNetBuilder.FactoriesAndParameters;
 using Newtonsoft.Json;
@@ -61,8 +62,8 @@ namespace NeuralNetBuilder
         public INet Net { get; set; }
         public INet TrainedNet { get; set; }
         public ITrainer Trainer { get; set; }
-        public bool IsLogged { get; set; }  // INPC
-        public string LogName { get; set; } //?
+        // public bool IsLogged { get; set; }  // INPC
+        // public string LogName { get; set; } //?
 
         public string Status
         {
@@ -92,7 +93,7 @@ namespace NeuralNetBuilder
                 await sampleSet.TrainSet.ShuffleAsync();
 
             Status = $"\n            Training, please wait...\n";
-            await Trainer.TrainAsync(shuffle, IsLogged ? logFileName : default);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
+            await Trainer.TrainAsync(shuffle, logFileName);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
             TrainedNet = Trainer.TrainedNet?.GetCopy();
             Status = $"\n            Finished training.\n";
         }
@@ -207,6 +208,14 @@ namespace NeuralNetBuilder
             Net.Layers = layers;
             Status = "Successfully loaded trained net.";
         }
+        /// <summary>
+        /// This method provides a notification after the sample set is loaded completely.
+        /// </summary>
+        //public async Task LoadSampleSetAsync(string fileName, decimal split, int labelColumn, int[] ignoredColumns)
+        //{
+        //    await SampleSet.LoadAsync(fileName, split, labelColumn, ignoredColumns);
+        //    OnPropertyChanged(nameof(SampleSet));
+        //}
 
         // Set IsLogged and Logname ?
 
