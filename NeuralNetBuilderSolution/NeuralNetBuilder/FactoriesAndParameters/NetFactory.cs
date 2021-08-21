@@ -3,6 +3,7 @@ using NeuralNetBuilder.CostFunctions;
 using NeuralNetBuilder.WeightInits;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace NeuralNetBuilder.FactoriesAndParameters
 {
@@ -16,9 +17,18 @@ namespace NeuralNetBuilder.FactoriesAndParameters
 
         #region public/internal
 
+        internal static async Task<INet> CreateNetAsync(INetParameters netParameters)
+        {
+            return await Task.Run(() =>
+            {
+                return CreateNet(netParameters);
+            });
+        }
         internal static INet CreateNet(INetParameters netParameters)
         {
-            INet rawNet = new Net() { NetStatus = NetStatus.Undefined };
+            INet rawNet = new Net() { 
+                //NetStatus = NetStatus.Undefined 
+            };
 
             ILayer[] layers = new ILayer[netParameters.LayerParametersCollection.Count];
             
@@ -40,7 +50,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
             }
 
             rawNet.Layers = layers;
-            rawNet.NetStatus = NetStatus.Initialized;    // DIC?
+            //rawNet.NetStatus = NetStatus.Initialized;    // DIC?
 
             return rawNet;
         }

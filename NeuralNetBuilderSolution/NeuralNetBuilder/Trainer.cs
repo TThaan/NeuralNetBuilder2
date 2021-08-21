@@ -1,6 +1,6 @@
 ﻿using CustomLogger;
 using DeepLearningDataProvider;
-using DeepLearningDataProvider.SampleSetExtensionMethods;
+using DeepLearningDataProvider.SampleSetHelpers;
 using MatrixExtensions;
 using NeuralNetBuilder.FactoriesAndParameters;
 using System;
@@ -40,7 +40,7 @@ namespace NeuralNetBuilder
     {
         #region fields
 
-        private readonly ITrainerParameters _parameters;    // redundant?
+        // private readonly ITrainerParameters _parameters;    // redundant?
         ILearningNet learningNet;
         INet originalNet, trainedNet;
         ISampleSet _sampleSet;
@@ -208,7 +208,7 @@ namespace NeuralNetBuilder
 
         public async Task TrainAsync(bool shuffleSamplesBeforeTraining, string logName) // Remove logName as parameter and use a field/prop!?
         {
-            LearningNet = NetFactory.GetLearningNet(originalNet, _parameters.CostType); // CostType as Trainer prop?
+            LearningNet = NetFactory.GetLearningNet(originalNet, CostType); // CostType as Trainer prop?
             TrainerStatus = TrainerStatus.Running;
             Message = "Training";
 

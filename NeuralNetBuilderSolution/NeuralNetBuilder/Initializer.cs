@@ -1,5 +1,5 @@
 ﻿using DeepLearningDataProvider;
-using DeepLearningDataProvider.SampleSetExtensionMethods;
+using DeepLearningDataProvider.SampleSetHelpers;
 using NeuralNetBuilder.Builders;
 using NeuralNetBuilder.FactoriesAndParameters;
 using Newtonsoft.Json;
@@ -10,7 +10,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using static NeuralNetBuilder.Helpers;
+using System.Windows;
+using System.Threading;
 
 namespace NeuralNetBuilder
 {
@@ -31,9 +32,10 @@ namespace NeuralNetBuilder
             ParameterBuilder.TrainerParameters = new TrainerParameters();   // DI?
             PathBuilder = new PathBuilder();                                // DI?
 
-            Trainer = new Trainer();            // DI?
-            Net = new Net();                    // DI?
-            SampleSet = new SampleSet();        // DI?
+            // Trainer = new Trainer();            // DI?
+            // Net = new Net() { Layers = new ILayer[0] };                    // DI?
+            // SampleSet = new SampleSet();        // DI?
+            // -> Inject factories for Net, Trainer and SampleSet? And ImpExport instance?
 
             RegisterPropertyChanged();
 
@@ -44,10 +46,10 @@ namespace NeuralNetBuilder
 
         private void RegisterPropertyChanged()
         {
+            PathBuilder.PropertyChanged += InitializerAssistant_PropertyChanged;
+            ParameterBuilder.PropertyChanged += InitializerAssistant_PropertyChanged;
             ParameterBuilder.NetParameters.PropertyChanged += InitializerAssistant_PropertyChanged;
             ParameterBuilder.TrainerParameters.PropertyChanged += InitializerAssistant_PropertyChanged;
-            ParameterBuilder.PropertyChanged += InitializerAssistant_PropertyChanged;
-            PathBuilder.PropertyChanged += InitializerAssistant_PropertyChanged;
         }
 
         #endregion
@@ -80,17 +82,18 @@ namespace NeuralNetBuilder
 
         #region methods
 
-        public async Task TrainAsync(ISampleSet sampleSet, bool shuffle, string logFileName = "")
+        // Really some values from parameters and some from fields?
+        public async Task TrainAsync(bool shuffle, string logFileName = "")
         {
             if (Trainer == null)
-                ThrowFormattedArgumentException("\nYou need a trainer to start training!");
+                throw new ArgumentException("\nYou need a trainer to start training!");
             if (Net == null)
-                ThrowFormattedArgumentException("\nYou need a net to start training!");
-            if (sampleSet == null)
-                ThrowFormattedArgumentException("\nYou need a sample set to start training!");
+                throw new ArgumentException("\nYou need a net to start training!");
+            if (SampleSet == null)
+                throw new ArgumentException("\nYou need a sample set to start training!");
 
             if (shuffle)
-                await sampleSet.TrainSet.ShuffleAsync();
+                await SampleSet.TrainSet.ShuffleAsync();
 
             Status = $"\n            Training, please wait...\n";
             await Trainer.TrainAsync(shuffle, logFileName);   // Pass in the net here?  // Should epochs (all trainerparameters) already be in the trainer?
@@ -100,14 +103,13 @@ namespace NeuralNetBuilder
         public async Task CreateNetAsync(bool appendLabelsLayer = false)
         {
             if (ParameterBuilder.NetParameters == null)
-                ThrowFormattedArgumentException("You need net parameters to create the net!");
+                throw new ArgumentException("You need net parameters to create the net!");
 
             if (appendLabelsLayer)
             {
                 if (SampleSet == null || SampleSet.TrainSet == null || SampleSet.TestSet == null)
                     Status = "You need a sample set (incl a train set and a test set) to append a default labels layer!";
 
-                // to NetParametersFactory? Do I want labels layer parameters (in net parameters) or only the layer in the net?
                 var labelsLayer = new LayerParameters
                 {
                     Id = ParameterBuilder.NetParameters.LayerParametersCollection.Count,
@@ -121,34 +123,29 @@ namespace NeuralNetBuilder
 
                 ParameterBuilder.NetParameters.LayerParametersCollection.Add(labelsLayer);
             }
-            
-            await Task.Run(() =>
-            {
-                Status = "Creating net, please wait...";
-                Net = NetFactory.CreateNet(ParameterBuilder.NetParameters);  // as async method?
-                Status = "Successfully created net.";
-            });
+
+            Status = "Creating net, please wait...";
+            Net = await NetFactory.CreateNetAsync(ParameterBuilder.NetParameters);  // Get Factory via DI?
+            Status = "Successfully created net.";
         }
-        public async Task CreateTrainerAsync()
+        public void CreateTrainer()
         {
             if (ParameterBuilder.TrainerParameters == null)
-                ThrowFormattedArgumentException("You need trainer parameters to create the trainer!");
+                throw new ArgumentException("You need trainer parameters to create the trainer!");
             if (Net == null)
-                ThrowFormattedArgumentException("You need to create the net to create the trainer!");
+                throw new ArgumentException("You need to create the net to create the trainer!");
             if (SampleSet == null)
-                ThrowFormattedArgumentException("You need a sample set to create the trainer!");
+                throw new ArgumentException("You need a sample set to create the trainer!");
 
-            await Task.Run(() =>
-            {
-                Status = "Createing trainer, please wait...";
-                Trainer.Epochs = ParameterBuilder.TrainerParameters.Epochs;
-                Trainer.LearningRate = ParameterBuilder.TrainerParameters.LearningRate;
-                Trainer.LearningRateChange = ParameterBuilder.TrainerParameters.LearningRateChange;
-                Trainer.CostType = ParameterBuilder.TrainerParameters.CostType;
-                Trainer.OriginalNet = Net.GetCopy();
-                Trainer.SampleSet = SampleSet;
-                Status = "Successfully created trainer.";
-            });
+            Status = "Createing trainer, please wait...";
+            Trainer = new Trainer();    // Use Factory?
+            Trainer.Epochs = ParameterBuilder.TrainerParameters.Epochs;
+            Trainer.LearningRate = ParameterBuilder.TrainerParameters.LearningRate;
+            Trainer.LearningRateChange = ParameterBuilder.TrainerParameters.LearningRateChange;
+            Trainer.CostType = ParameterBuilder.TrainerParameters.CostType;
+            Trainer.OriginalNet = Net.GetCopy();
+            Trainer.SampleSet = SampleSet;
+            Status = "Successfully created trainer.";
         }
         public async Task SaveInitializedNetAsync(string fileName)
         {
@@ -157,7 +154,7 @@ namespace NeuralNetBuilder
             var jsonString = JsonConvert.SerializeObject(Net, Formatting.Indented);
             await File.AppendAllTextAsync(fileName, jsonString);
 
-            Status = "Successfully saved initialized net.";
+            Status = "Successfully saved initialized net."; // Not awaiting nested tasks result!
         }
         public async Task SaveTrainedNetAsync(string fileName)
         {
@@ -166,7 +163,7 @@ namespace NeuralNetBuilder
             var jsonString = JsonConvert.SerializeObject(TrainedNet, Formatting.Indented);
             await File.AppendAllTextAsync(fileName, jsonString);
 
-            Status = "Successfully saved trained net.";
+            Status = "Successfully saved trained net.";     // Not awaiting nested tasks result!
         }
         public async Task LoadNetAsync(string fileName)
         {
@@ -208,14 +205,33 @@ namespace NeuralNetBuilder
             Net.Layers = layers;
             Status = "Successfully loaded trained net.";
         }
-        /// <summary>
-        /// This method provides a notification after the sample set is loaded completely.
-        /// </summary>
-        //public async Task LoadSampleSetAsync(string fileName, decimal split, int labelColumn, int[] ignoredColumns)
-        //{
-        //    await SampleSet.LoadAsync(fileName, split, labelColumn, ignoredColumns);
-        //    OnPropertyChanged(nameof(SampleSet));
-        //}
+        public async Task LoadSampleSetAsync(string fileName, decimal split, int labelColumn, int[] ignoredColumns)
+        {
+            if (split <= 0 || split >= 1)
+                throw new ArgumentException("The fraction of test samples must be (exclusively) between 0 and 1 (betwwen 0 and 100 in percent)");
+
+            Status = "Loading sample set from file, please wait...";
+            SampleSet = await SaveAndLoad.LoadSampleSetAsync(fileName, split, labelColumn, ignoredColumns); // Factory..
+            Status = "Successfully loaded sample set.";
+        }
+        public async Task UnloadSampleSetAsync()
+        {
+            Status = "Unloading sample set, please wait...";
+            await SaveAndLoad.UnloadSampleSetAsync(SampleSet);
+            OnPropertyChanged(nameof(SampleSet));
+
+            Status = "Successfully unloaded sample set.";
+
+        }
+        public async Task SaveSampleSetAsync(string fileName, bool overWriteExistingFile = true)
+        {
+            if (SampleSet == null)
+                throw new ArgumentException("You have no sample set to be saved!");
+
+            Status = "Loading sample set from file, please wait...";
+            await SaveAndLoad.SaveSampleSetAsync(SampleSet, fileName, overWriteExistingFile);
+            Status = "Successfully loaded sample set.";
+        }
 
         // Set IsLogged and Logname ?
 

@@ -13,7 +13,7 @@ namespace NeuralNetBuilder
     {
         ILayer[] Layers { get; set; }
         INet GetCopy();
-        NetStatus NetStatus { get; set; }
+        // NetStatus NetStatus { get; set; }
         // bool IsInitialized { get; set; }
     }
 
@@ -34,7 +34,7 @@ namespace NeuralNetBuilder
         {
             return NetFactory.GetCopy(this);
         }
-        public NetStatus NetStatus { get; set; }
+        // public NetStatus NetStatus { get; set; }
         //public bool IsInitialized { get; set; }
 
         #endregion

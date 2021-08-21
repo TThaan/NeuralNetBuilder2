@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using static NeuralNetBuilder.Helpers;
 
 namespace NeuralNetBuilder.Builders
 {
@@ -267,7 +266,7 @@ namespace NeuralNetBuilder.Builders
         public void SetGeneralPath(string path)
         {
             if (!Directory.Exists(path))
-                ThrowFormattedException(new FileNotFoundException($"Path {path} not found."));
+                throw new ArgumentException($"Path {path} not found.");
 
             General = path;
             Status = "General path is set.";

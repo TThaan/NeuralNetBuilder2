@@ -18,10 +18,12 @@
     {
         None, Xavier,
     }
-    public enum NetStatus
-    {
-        Undefined, Initialized  // Raw instead of Undefined?
-    }
+
+    // Remove
+    //public enum NetStatus
+    //{
+    //    Undefined, Initialized  // Raw instead of Undefined?
+    //}
     public enum TrainerStatus
     {
         Undefined, Initialized, Running, Paused, Finished   // Raw instead of Undefined?
