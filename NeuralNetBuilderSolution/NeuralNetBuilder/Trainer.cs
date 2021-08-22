@@ -225,9 +225,10 @@ namespace NeuralNetBuilder
 
         public async Task TrainAsync(bool shuffleSamplesBeforeTraining, string logName) // Remove logName as parameter and use a field/prop!?
         {
-            LearningNet = NetFactory.GetLearningNet(originalNet, CostType);
-            Status = TrainerStatus.Running;
+            // Status = TrainerStatus.Running;
             Notification = "Training";
+
+            // LearningNet = NetFactory.GetLearningNet(originalNet, CostType);
 
             using (ILogger logger = string.IsNullOrEmpty(logName)
                 ? null
@@ -237,8 +238,11 @@ namespace NeuralNetBuilder
 
                 for (currentEpoch = CurrentEpoch; currentEpoch < Epochs; CurrentEpoch++)
                 {
-                    await _sampleSet.ArrangeSamplesAsync(shuffleSamplesBeforeTraining, lastTestResult);
-                    SamplesTotal = _sampleSet.ArrangedTrainSet.Count;
+                    if (CurrentSample == 0)
+                    {
+                        await _sampleSet.ArrangeSamplesAsync(shuffleSamplesBeforeTraining, lastTestResult);
+                        SamplesTotal = _sampleSet.ArrangedTrainSet.Count;
+                    }
 
                     for (currentSample = CurrentSample; currentSample < samplesTotal; CurrentSample++)
                     {
@@ -254,9 +258,6 @@ namespace NeuralNetBuilder
 
                         if (Status == TrainerStatus.Paused)
                         {
-                            Notification = "Training Paused";
-                            CurrentSample++;
-                            CurrentEpoch = currentSample == samplesTotal ? currentEpoch + 1 : currentEpoch;
                             await FinalizeEpoch(logger);
                             return;
                         }
@@ -282,7 +283,13 @@ namespace NeuralNetBuilder
                 await _sampleSet.TrainSet.ShuffleAsync();
             }
 
-            if (Status != TrainerStatus.Paused)
+            if (Status == TrainerStatus.Paused)
+            {
+                Notification = "Training Paused";
+                CurrentSample++;
+                CurrentEpoch = currentSample == samplesTotal ? currentEpoch + 1 : currentEpoch;
+            }
+            else if(Status == TrainerStatus.Running)
                 Notification = $"Epoch {currentEpoch} finished. (Accuracy: {lastEpochsAccuracy})";
         }
         public async Task TestAsync(Sample[] testSet, ILogger logger)

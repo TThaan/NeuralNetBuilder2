@@ -134,6 +134,8 @@ namespace NeuralNetBuilder
             Trainer.OriginalNet = Net.GetCopy();
             Trainer.SampleSet = SampleSet;
             Trainer.SamplesTotal = SampleSet.Samples.Length;
+
+            Trainer.LearningNet = NetFactory.GetLearningNet(Trainer.OriginalNet, Trainer.CostType);
         }
         public async Task SaveInitializedNetAsync(string fileName)
         {
