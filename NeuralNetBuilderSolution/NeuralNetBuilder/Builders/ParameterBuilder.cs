@@ -14,7 +14,7 @@ namespace NeuralNetBuilder.Builders
     // They provide a Status property incl an event to notify about the (succeeded) data changes.
     // Failed attempts throwing an exception can be caught in the client.
 
-    public class ParameterBuilder : ParametersBase
+    public class ParameterBuilder : NotificationChangedBase
     {
         #region fields & ctor
 
@@ -24,8 +24,6 @@ namespace NeuralNetBuilder.Builders
 
         private INetParameters netParameters;
         private ITrainerParameters trainerParameters;
-
-        private string status;
 
         #endregion
 
@@ -60,17 +58,6 @@ namespace NeuralNetBuilder.Builders
         public IEnumerable<ActivationType> ActivationTypes => activationTypes ??
             (activationTypes = Enum.GetValues(typeof(ActivationType)).ToList<ActivationType>());
 
-        public string Status 
-        {
-            get { return status; }
-            set
-            {
-                // No equality check due to potentially reapeated statuses.
-                status = value;
-                OnPropertyChanged();
-            }
-        }
-
         #endregion
 
         #region methods
@@ -80,35 +67,35 @@ namespace NeuralNetBuilder.Builders
         public void SetWeightInitType(int weightInitType)
         {
             NetParameters.WeightInitType = (WeightInitType)weightInitType;
-            Status = $"WeightInitType = {NetParameters.WeightInitType}.";
+            Notification = $"WeightInitType = {NetParameters.WeightInitType}.";
         }
         public void SetWeightMax_Globally(float weightMax)
         {
             // WeightMax_Global = weightMax;
             foreach (var lp in NetParameters.LayerParametersCollection)
             lp.WeightMax = weightMax;
-            Status = $"Global WeightMax = {weightMax}.";
+            Notification = $"Global WeightMax = {weightMax}.";
         }
         public void SetWeightMin_Globally(float weightMin)
         {
             //WeightMin_Global = weightMin;
             foreach (var lp in NetParameters.LayerParametersCollection)
             lp.WeightMax = weightMin;
-            Status = $"Global WeightMin = {weightMin}.";
+            Notification = $"Global WeightMin = {weightMin}.";
         }
         public void SetBiasMax_Globally(float biasMax)
         {
             //BiasMax_Global = biasMax;
             foreach (var lp in NetParameters.LayerParametersCollection)
             lp.WeightMax = biasMax;
-            Status = $"Global BiasMax = {biasMax}.";
+            Notification = $"Global BiasMax = {biasMax}.";
         }
         public void SetBiasMin_Globally(float biasMin)
         {
             //BiasMin_Global = biasMin;
             foreach (var lp in NetParameters.LayerParametersCollection)
             lp.WeightMax = biasMin;
-            Status = $"Global BiasMin = {biasMin}.";
+            Notification = $"Global BiasMin = {biasMin}.";
         }
 
         public void AddLayerAfter(int precedingLayerId)
@@ -130,16 +117,16 @@ namespace NeuralNetBuilder.Builders
             LayerParametersCollection.Insert(precedingLayerId + 1, newLayerParameters);
             ResetLayersIndeces();
 
-            Status = $"New layer added. (Id = {precedingLayerId + 1}).";
+            Notification = $"New layer added. (Id = {precedingLayerId + 1}).";
         }
         public void DeleteLayer(int layerId)
         {
             LayerParametersCollection.Remove(LayerParametersCollection[layerId]);
             
             if (LayerParametersCollection.Count > 2)
-                Status = $"Layer {layerId} deleted.";
+                Notification = $"Layer {layerId} deleted.";
             else
-                Status = $"You must not delete the last standing layer.";
+                Notification = $"You must not delete the last standing layer.";
             
             ResetLayersIndeces();
         }
@@ -148,45 +135,45 @@ namespace NeuralNetBuilder.Builders
             LayerParametersCollection.Move(
             layerId, layerId > 0 ? layerId - 1 : 0);
             ResetLayersIndeces();
-            Status = $"Switched layers {layerId} and {layerId - 1}.";
+            Notification = $"Switched layers {layerId} and {layerId - 1}.";
         }
         public void MoveLayerRight(int layerId)
         {
             LayerParametersCollection.Move(
             layerId, layerId < NetParameters.LayerParametersCollection.Count - 1 ? layerId + 1 : 0);
             ResetLayersIndeces();
-            Status = $"Switched layers {layerId} and {layerId + 1}.";
+            Notification = $"Switched layers {layerId} and {layerId + 1}.";
         }
 
         public void SetNeuronsAtLayer(int layerId, int neurons)
         {
             LayerParametersCollection[layerId].NeuronsPerLayer = neurons;
-            Status = $"Amount of neurons in layer {layerId} = {LayerParametersCollection[layerId].NeuronsPerLayer}.";
+            Notification = $"Amount of neurons in layer {layerId} = {LayerParametersCollection[layerId].NeuronsPerLayer}.";
         }
         public void SetActivationTypeAtLayer(int layerId, int activationType)
         {
             LayerParametersCollection[layerId].ActivationType = (ActivationType)activationType;
-            Status = $"Activation type of layer {layerId} = {(ActivationType)activationType}.";
+            Notification = $"Activation type of layer {layerId} = {(ActivationType)activationType}.";
         }
         public void SetWeightMaxAtLayer(int layerId, float weightMax)
         {
             LayerParametersCollection[layerId].WeightMax = weightMax;
-            Status = $"WeightMax of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.";
+            Notification = $"WeightMax of layer {layerId} = {LayerParametersCollection[layerId].WeightMax}.";
         }
         public void SetWeightMinAtLayer(int layerId, float weightMin)
         {
             LayerParametersCollection[layerId].WeightMin = weightMin;
-            Status = $"WeightMin of layer {layerId} = {LayerParametersCollection[layerId].WeightMin}.";
+            Notification = $"WeightMin of layer {layerId} = {LayerParametersCollection[layerId].WeightMin}.";
         }
         public void SetBiasMaxAtLayer(int layerId, float biasMax)
         {
             LayerParametersCollection[layerId].BiasMax = biasMax;
-            Status = $"BiasMax of layer {layerId} = {LayerParametersCollection[layerId].BiasMax}.";
+            Notification = $"BiasMax of layer {layerId} = {LayerParametersCollection[layerId].BiasMax}.";
         }
         public void SetBiasMinAtLayer(int layerId, float biasMin)
         {
             LayerParametersCollection[layerId].BiasMin = biasMin;
-            Status = $"BiasMin of layer {layerId} = {LayerParametersCollection[layerId].BiasMin}.";
+            Notification = $"BiasMin of layer {layerId} = {LayerParametersCollection[layerId].BiasMin}.";
         }
 
         #endregion
@@ -196,22 +183,22 @@ namespace NeuralNetBuilder.Builders
         public void SetCostType(int costType)
         {
             TrainerParameters.CostType = (CostType)costType;
-            Status = $"{nameof(TrainerParameters.CostType)} has been set to {TrainerParameters.CostType}.";
+            Notification = $"{nameof(TrainerParameters.CostType)} has been set to {TrainerParameters.CostType}.";
         }
         public void SetLearningRateChange(float learningRateChange)
         {
             TrainerParameters.LearningRateChange = learningRateChange;
-            Status = $"{nameof(TrainerParameters.LearningRateChange)} has been set to {TrainerParameters.LearningRateChange}.";
+            Notification = $"{nameof(TrainerParameters.LearningRateChange)} has been set to {TrainerParameters.LearningRateChange}.";
         }
         public void SetLearningRate(float learningRate)
         {
             TrainerParameters.LearningRate = learningRate;
-            Status = $"{nameof(TrainerParameters.LearningRate)} has been set to {TrainerParameters.LearningRate}.";
+            Notification = $"{nameof(TrainerParameters.LearningRate)} has been set to {TrainerParameters.LearningRate}.";
         }
         public void SetEpochs(int epochs)
         {
             TrainerParameters.Epochs = epochs;
-            Status = $"{nameof(TrainerParameters.Epochs)} has been set to {TrainerParameters.Epochs}.";
+            Notification = $"{nameof(TrainerParameters.Epochs)} has been set to {TrainerParameters.Epochs}.";
         }
 
         #endregion
@@ -220,28 +207,28 @@ namespace NeuralNetBuilder.Builders
 
         public async Task LoadNetParametersAsync(string fileName)
         {
-            Status = "Loading net parameters from file, please wait...";
+            Notification = "Loading net parameters from file, please wait...";
             NetParameters = await Import.LoadAsJsonAsync<NetParameters>(fileName);
-            Status = "Successfully loaded net parameters.";
+            Notification = "Successfully loaded net parameters.";
         }
         public async Task LoadTrainerParametersAsync(string path)
         {
-            Status = "Loading trainer parameters from file, please wait...";                    
+            Notification = "Loading trainer parameters from file, please wait...";                    
             TrainerParameters = await Import.LoadAsJsonAsync<TrainerParameters>(path);
-            Status = "Successfully loaded trainer parameters.";
+            Notification = "Successfully loaded trainer parameters.";
         }
 
         public async Task SaveNetParametersAsync(string path, Formatting formatting = Formatting.Indented)
         {
-            Status = "Saving net parameters, please wait...";
+            Notification = "Saving net parameters, please wait...";
             await Export.SaveAsJsonAsync(NetParameters, path, formatting, true);
-            Status = "Successfully saved net parameters.";
+            Notification = "Successfully saved net parameters.";
         }
         public async Task SaveTrainerParametersAsync(string path, Formatting formatting = Formatting.Indented)
         {
-            Status = "Saving trainer parameters, please wait...";
+            Notification = "Saving trainer parameters, please wait...";
             await Export.SaveAsJsonAsync(TrainerParameters, path, formatting, true);
-            Status = "Successfully saved trainer parameters.";
+            Notification = "Successfully saved trainer parameters.";
         }
 
         #endregion

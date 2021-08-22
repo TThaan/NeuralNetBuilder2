@@ -14,7 +14,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
     }
 
     [Serializable]
-    public class TrainerParameters : ParametersBase, ITrainerParameters
+    public class TrainerParameters : PropertyChangedBase, ITrainerParameters
     {
         #region fields & ctor
 

@@ -14,7 +14,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
     }
 
     [Serializable]
-    public class NetParameters : ParametersBase, INetParameters
+    public class NetParameters : PropertyChangedBase, INetParameters
     {
         #region fields
 

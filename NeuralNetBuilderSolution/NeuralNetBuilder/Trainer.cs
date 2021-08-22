@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace NeuralNetBuilder
 {
-    public interface ITrainer : INotifyPropertyChanged, IDisposable
+    public interface ITrainer : INotificationChanged, IDisposable
     {
         INet OriginalNet { get; set; }
         ILearningNet LearningNet { get; set; }
@@ -26,39 +26,69 @@ namespace NeuralNetBuilder
         float LearningRateChange { get; set; }
         float LastEpochsAccuracy { get; set; }
         float CurrentTotalCost { get; set; }        
-        TrainerStatus TrainerStatus { get; set; }
-        public string Message { get; set; }
+        TrainerStatus Status { get; set; }
         Task TrainAsync(bool shuffleSamplesBeforeTraining, string logName);
         Task TestAsync(Sample[] testingSamples, ILogger logger = default);
         Task Reset();
-        event TrainerStatusChangedEventHandler TrainerStatusChanged;
 
         CostType CostType { get; set; }
     }
 
-    public class Trainer : ITrainer, INotifyPropertyChanged 
+    public class Trainer : NotificationChangedBase, ITrainer 
     {
         #region fields
 
-        // private readonly ITrainerParameters _parameters;    // redundant?
         ILearningNet learningNet;
         INet originalNet, trainedNet;
         ISampleSet _sampleSet;
 
         Dictionary<string, int> lastTestResult = new Dictionary<string, int>();
-        int samplesTotal, currentEpoch = 0, currentSample = 0;
-        float currentLearningRate, lastEpochsAccuracy, currentTotalCost;
+        int samplesTotal, epochs, currentEpoch = 0, currentSample = 0;
+        float learningRateChange, currentLearningRate, lastEpochsAccuracy, currentTotalCost;
+        CostType costType;
         TrainerStatus trainerStatus;
-        string message;
         // Random rnd;
 
         #endregion
 
         #region public
 
-        public CostType CostType { get; set; }
-        public int Epochs { get; set; }
-        public float LearningRateChange { get; set; }
+        public CostType CostType
+        {
+            get { return costType; }
+            set
+            {
+                if (costType != value)
+                {
+                    costType = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        public int Epochs
+        {
+            get { return epochs; }
+            set
+            {
+                if (epochs != value)
+                {
+                    epochs = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        public float LearningRateChange
+        {
+            get { return learningRateChange; }
+            set
+            {
+                if (learningRateChange != value)
+                {
+                    learningRateChange = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         public INet OriginalNet
         {
@@ -180,7 +210,7 @@ namespace NeuralNetBuilder
                 }
             }
         }
-        public TrainerStatus TrainerStatus   // redundant?
+        public TrainerStatus Status
         {
             get { return trainerStatus; }
             set
@@ -189,28 +219,15 @@ namespace NeuralNetBuilder
                 {
                     trainerStatus = value;
                     OnPropertyChanged();
-                    OnTrainerStatusChanged($"TrainerStatus = {value}");
-                }
-            }
-        }
-        public string Message
-        {
-            get { return message; }
-            set
-            {
-                if (message != value)
-                {
-                    message = value;
-                    OnPropertyChanged();
                 }
             }
         }
 
         public async Task TrainAsync(bool shuffleSamplesBeforeTraining, string logName) // Remove logName as parameter and use a field/prop!?
         {
-            LearningNet = NetFactory.GetLearningNet(originalNet, CostType); // CostType as Trainer prop?
-            TrainerStatus = TrainerStatus.Running;
-            Message = "Training";
+            LearningNet = NetFactory.GetLearningNet(originalNet, CostType);
+            Status = TrainerStatus.Running;
+            Notification = "Training";
 
             using (ILogger logger = string.IsNullOrEmpty(logName)
                 ? null
@@ -221,7 +238,7 @@ namespace NeuralNetBuilder
                 for (currentEpoch = CurrentEpoch; currentEpoch < Epochs; CurrentEpoch++)
                 {
                     await _sampleSet.ArrangeSamplesAsync(shuffleSamplesBeforeTraining, lastTestResult);
-                    samplesTotal = _sampleSet.ArrangedTrainSet.Count;
+                    SamplesTotal = _sampleSet.ArrangedTrainSet.Count;
 
                     for (currentSample = CurrentSample; currentSample < samplesTotal; CurrentSample++)
                     {
@@ -235,9 +252,9 @@ namespace NeuralNetBuilder
                         await learningNet.AdjustWeightsAndBiasesAsync(LearningRate);
                         LogNet(logger);
 
-                        if (TrainerStatus == TrainerStatus.Paused)
+                        if (Status == TrainerStatus.Paused)
                         {
-                            Message = "Training Paused";
+                            Notification = "Training Paused";
                             CurrentSample++;
                             CurrentEpoch = currentSample == samplesTotal ? currentEpoch + 1 : currentEpoch;
                             await FinalizeEpoch(logger);
@@ -249,8 +266,8 @@ namespace NeuralNetBuilder
                 }
             }
 
-            TrainerStatus = TrainerStatus.Finished;
-            Message = "Training Finished";
+            Status = TrainerStatus.Finished;
+            Notification = "Training Finished";
         }
 
         private async Task FinalizeEpoch(ILogger logger)
@@ -261,12 +278,12 @@ namespace NeuralNetBuilder
             {
                 LearningRate *= LearningRateChange;
                 await TestAsync(_sampleSet.TestSet, logger);
-                currentSample = 0;
+                CurrentSample = 0;
                 await _sampleSet.TrainSet.ShuffleAsync();
             }
 
-            if (TrainerStatus != TrainerStatus.Paused)
-                OnTrainerStatusChanged($"Epoch {currentEpoch} finished. (Accuracy: {lastEpochsAccuracy})");
+            if (Status != TrainerStatus.Paused)
+                Notification = $"Epoch {currentEpoch} finished. (Accuracy: {lastEpochsAccuracy})";
         }
         public async Task TestAsync(Sample[] testSet, ILogger logger)
         {
@@ -317,7 +334,7 @@ namespace NeuralNetBuilder
                 currentSample = 0;
                 LearningRate = 0;
                 //LearningRateChange = 0;
-                TrainerStatus = TrainerStatus.Undefined;
+                Status = TrainerStatus.Undefined;
             });
         }
 
@@ -397,22 +414,6 @@ namespace NeuralNetBuilder
         }
 
         #endregion
-
-        #endregion
-
-        #region Events
-
-        public event PropertyChangedEventHandler PropertyChanged;
-        public event TrainerStatusChangedEventHandler TrainerStatusChanged;
-
-        void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-        void OnTrainerStatusChanged(string info)
-        {
-            TrainerStatusChanged?.Invoke(this, new TrainerStatusChangedEventArgs(info));
-        }
 
         #endregion
 

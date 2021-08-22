@@ -17,7 +17,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
     }
 
     [Serializable]
-    public class LayerParameters : ParametersBase, ILayerParameters
+    public class LayerParameters : PropertyChangedBase, ILayerParameters
     {
         #region fields & ctor
 

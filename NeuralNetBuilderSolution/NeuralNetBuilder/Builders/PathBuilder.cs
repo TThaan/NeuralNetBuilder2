@@ -1,8 +1,5 @@
 ﻿using System;
-using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace NeuralNetBuilder.Builders
 {
@@ -12,11 +9,11 @@ namespace NeuralNetBuilder.Builders
     // They provide a Status property incl an event to notify about the (succeeded) data changes.
     // Failed attempts throwing an exception can be caught in the client.
 
-    public class PathBuilder : INotifyPropertyChanged
+    public class PathBuilder : NotificationChangedBase
     {
         #region fields & ctor
 
-        private string netParameters, trainerParameters, log, initializedNet, sampleSet, trainedNet, status,
+        private string netParameters, trainerParameters, log, initializedNet, sampleSet, trainedNet,
             basicName_InitializedNet = "InitializedNet.txt",
             basicName_TrainedNet = "TrainedNet.txt",
             basicName_SampleSet = "Samples.csv",
@@ -39,7 +36,7 @@ namespace NeuralNetBuilder.Builders
             {
                 if (basicName_InitializedNet != value)
                 {
-                    status = value;
+                    basicName_InitializedNet = value;
                     OnPropertyChanged();
                 }
             }
@@ -51,7 +48,7 @@ namespace NeuralNetBuilder.Builders
             {
                 if (basicName_TrainedNet != value)
                 {
-                    status = value;
+                    basicName_TrainedNet = value;
                     OnPropertyChanged();
                 }
             }
@@ -63,7 +60,7 @@ namespace NeuralNetBuilder.Builders
             {
                 if (basicName_SampleSet != value)
                 {
-                    status = value;
+                    basicName_SampleSet = value;
                     OnPropertyChanged();
                 }
             }
@@ -75,7 +72,7 @@ namespace NeuralNetBuilder.Builders
             {
                 if (basicName_NetParameters != value)
                 {
-                    status = value;
+                    basicName_NetParameters = value;
                     OnPropertyChanged();
                 }
             }
@@ -87,7 +84,7 @@ namespace NeuralNetBuilder.Builders
             {
                 if (basicName_TrainerParameters != value)
                 {
-                    status = value;
+                    basicName_TrainerParameters = value;
                     OnPropertyChanged();
                 }
             }
@@ -99,7 +96,7 @@ namespace NeuralNetBuilder.Builders
             {
                 if (basicName_Log != value)
                 {
-                    status = value;
+                    basicName_Log = value;
                     OnPropertyChanged();
                 }
             }
@@ -111,7 +108,7 @@ namespace NeuralNetBuilder.Builders
             {
                 if (basicName_Prefix != value)
                 {
-                    status = value;
+                    basicName_Prefix = value;
                     OnPropertyChanged();
                 }
             }
@@ -123,7 +120,7 @@ namespace NeuralNetBuilder.Builders
             {
                 if (basicName_Suffix != value)
                 {
-                    status = value;
+                    basicName_Suffix = value;
                     OnPropertyChanged();
                 }
             }
@@ -137,7 +134,7 @@ namespace NeuralNetBuilder.Builders
             {
                 if (general != value)
                 {
-                    status = value;
+                    general = value;
                     OnPropertyChanged();
                 }
             }
@@ -245,20 +242,6 @@ namespace NeuralNetBuilder.Builders
             }
         }
 
-        public string Status
-        {
-            get
-            {
-                return status;
-            }
-            set 
-            {
-                // No equality check here since repeated identic statuses are possible.
-                status = value;
-                OnPropertyChanged();
-            }
-        }
-
         #endregion
 
         #region methods
@@ -269,18 +252,18 @@ namespace NeuralNetBuilder.Builders
                 throw new ArgumentException($"Path {path} not found.");
 
             General = path;
-            Status = "General path is set.";
+            Notification = "General path is set.";
             UseGeneralPathAndDefaultNames();    // no default names here?
         }
         public void SetFileNamePrefix(string prefix)
         {
             BasicName_Prefix = prefix;
-            Status = $"The file name has prefix {prefix} now.";
+            Notification = $"The file name has prefix {prefix} now.";
         }
         public void SetFileNameSuffix(string suffix)
         {
             BasicName_Suffix = suffix;
-            Status = $"The file name has suffix {suffix} now.";
+            Notification = $"The file name has suffix {suffix} now.";
         }
         public void ResetPaths()
         {
@@ -294,7 +277,7 @@ namespace NeuralNetBuilder.Builders
 
             sampleSet = string.Empty;
 
-            Status = $"Path for all files has been reset.";
+            Notification = $"Path for all files has been reset.";
         }
         public void UseGeneralPathAndDefaultNames()
         {
@@ -307,62 +290,40 @@ namespace NeuralNetBuilder.Builders
             SetSampleSetPath(Path.Combine(General, BasicName_Prefix, BasicName_SampleSet + BasicName_Suffix));
         }
 
-        #region redundant?
+        #region redundant??
 
         public void SetInitializedNetPath(string path)
         {
             InitializedNet = path;
-            Status = $"Path to the initialized net has been set to\n{path}";
+            Notification = $"Path to the initialized net has been set to\n{path}";
         }
         public void SetTrainedNetPath(string path)
         {
             TrainedNet = path;
-            Status = $"Path to the trained net has been set to\n{path}";
+            Notification = $"Path to the trained net has been set to\n{path}";
         }
         public void SetSampleSetPath(string path)
         {
             SampleSet = path;
-            Status = $"Path to the sample set has been set to\n{path}";
+            Notification = $"Path to the sample set has been set to\n{path}";
         }
         public void SetNetParametersPath(string path)
         {
             NetParameters = path;
-            Status = $"Path to net parameters has been set to\n{path}";
+            Notification = $"Path to net parameters has been set to\n{path}";
         }
         public void SetTrainerParametersPath(string path)
         {
             TrainerParameters = path;
-            Status = $"Path to trainer parameters has been set to\n{path}";
+            Notification = $"Path to trainer parameters has been set to\n{path}";
         }
         public void SetLogPath(string path)
         {
             Log = path;
-            Status = $"Path to the log file has been set to\n{path}";
+            Notification = $"Path to the log file has been set to\n{path}";
         }
 
         #endregion
-
-        #endregion
-
-        #region INotifyPropertyChanged
-
-        private event PropertyChangedEventHandler propertyChanged;
-        public event PropertyChangedEventHandler PropertyChanged
-        {
-            add
-            {
-                if (propertyChanged == null || !propertyChanged.GetInvocationList().Contains(value))
-                    propertyChanged += value;
-                // else Log when debugging.
-
-            }
-            remove { propertyChanged -= value; }
-        }
-        public bool IsPropertyChangedNull => propertyChanged == null;
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            propertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
 
         #endregion
     }
