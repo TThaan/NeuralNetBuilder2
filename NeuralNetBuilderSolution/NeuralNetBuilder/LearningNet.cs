@@ -15,7 +15,6 @@ namespace NeuralNetBuilder
         float CurrentTotalCost { get; }
         Task PropagateBackAsync(float[] target);
         Task AdjustWeightsAndBiasesAsync(float learningRate);
-        INet GetNet();
     }
 
     public class LearningNet : ILearningNet
@@ -60,10 +59,6 @@ namespace NeuralNetBuilder
             {
                 Layers.ElementAt(1).AdaptWeightsAndBiases(learningRate);
             });
-        }
-        public INet GetNet()
-        {
-            return FactoriesAndParameters.NetFactory.GetNet(this);
         }
 
         #endregion

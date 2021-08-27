@@ -14,7 +14,6 @@ namespace NeuralNetBuilder
     // wa: Just test/run a given net?
     // wa: global parameters? Or in NetParameters?
 
-    // Remove INSC and implement property 'Status' like in ParameterBuilder?
     public class Initializer : NotificationChangedBase
     {
         #region fields & ctor
@@ -26,8 +25,8 @@ namespace NeuralNetBuilder
             ParameterBuilder.TrainerParameters = new TrainerParameters();   // DI?
             PathBuilder = new PathBuilder();                                // DI?
 
-            // Trainer = new Trainer();            // DI?
-            // Net = new Net() { Layers = new ILayer[0] };                    // DI?
+            Trainer = new Trainer();                                        // DI?
+            Net = new Net() { Layers = new ILayer[0] };                     // DI?
             // SampleSet = new SampleSet();        // DI?
             // -> Inject factories for Net, Trainer and SampleSet? And ImpExport instance?
 
@@ -81,62 +80,24 @@ namespace NeuralNetBuilder
             TrainedNet = Trainer.TrainedNet?.GetCopy();
             Notification = $"\n            Finished training.\n";
         }
-        public async Task CreateNetAsync(bool appendLabelsLayer = false)
-        {
-            if (ParameterBuilder.NetParameters == null)
-                throw new ArgumentException("You need net parameters to create the net!");
+        //public void AppendLabelsLayerToNetParameters()
+        //{
+        //    if (SampleSet == null || SampleSet.TrainSet == null || SampleSet.TestSet == null)
+        //        Notification = "You need a sample set (incl a train set and a test set) to append a default labels layer!";
 
-            if (appendLabelsLayer)
-            {
-                if (SampleSet == null || SampleSet.TrainSet == null || SampleSet.TestSet == null)
-                    Notification = "You need a sample set (incl a train set and a test set) to append a default labels layer!";
+        //    var labelsLayer = new LayerParameters
+        //    {
+        //        Id = ParameterBuilder.NetParameters.LayerParametersCollection.Count,
+        //        NeuronsPerLayer = SampleSet.Targets.Count,
+        //        ActivationType = ActivationType.Tanh,
+        //        WeightMin = -1,
+        //        WeightMax = 1,
+        //        BiasMin = 0,
+        //        BiasMax = 0,
+        //    };
 
-                var labelsLayer = new LayerParameters
-                {
-                    Id = ParameterBuilder.NetParameters.LayerParametersCollection.Count,
-                    NeuronsPerLayer = SampleSet.Targets.Count,
-                    ActivationType = ActivationType.Tanh,
-                    WeightMin = -1,
-                    WeightMax = 1,
-                    BiasMin = 0,
-                    BiasMax = 0,
-                };
-
-                ParameterBuilder.NetParameters.LayerParametersCollection.Add(labelsLayer);
-            }
-
-            Notification = "Creating net, please wait...";
-            Net = await NetFactory.CreateNetAsync(ParameterBuilder.NetParameters);  // Get Factory via DI?
-            Notification = "Successfully created net.";
-        }
-        public void CreateTrainer()
-        {
-            if (ParameterBuilder.TrainerParameters == null)
-                throw new ArgumentException("You need trainer parameters to create the trainer!");
-            if (Net == null)
-                throw new ArgumentException("You need to create the net to create the trainer!");
-            if (SampleSet == null)
-                throw new ArgumentException("You need a sample set to create the trainer!");
-
-            Notification = "Createing trainer, please wait...";
-            Trainer = new Trainer();    // Use Factory?
-            Notification = "Successfully created trainer.";
-        }
-        /// <summary>
-        /// Use after creating trainer and potentially registering its events.
-        /// </summary>
-        public void InitializeTrainer()
-        {
-            Trainer.Epochs = ParameterBuilder.TrainerParameters.Epochs;
-            Trainer.LearningRate = ParameterBuilder.TrainerParameters.LearningRate;
-            Trainer.LearningRateChange = ParameterBuilder.TrainerParameters.LearningRateChange;
-            Trainer.CostType = ParameterBuilder.TrainerParameters.CostType;
-            Trainer.OriginalNet = Net.GetCopy();
-            Trainer.SampleSet = SampleSet;
-            Trainer.SamplesTotal = SampleSet.Samples.Length;
-
-            Trainer.LearningNet = NetFactory.GetLearningNet(Trainer.OriginalNet, Trainer.CostType);
-        }
+        //    ParameterBuilder.NetParameters.LayerParametersCollection.Add(labelsLayer);
+        //}
         public async Task SaveInitializedNetAsync(string fileName)
         {
             Notification = "Saving initialized net, please wait...";
@@ -198,7 +159,7 @@ namespace NeuralNetBuilder
         public async Task LoadSampleSetAsync(string fileName, decimal split, int labelColumn, int[] ignoredColumns)
         {
             if (split <= 0 || split >= 1)
-                throw new ArgumentException("The fraction of test samples must be (exclusively) between 0 and 1 (betwwen 0 and 100 in percent)");
+                throw new ArgumentException("The fraction of test samples must be (exclusively) between 0 and 1");
 
             Notification = "Loading sample set from file, please wait...";
             SampleSet = await SaveAndLoad.LoadSampleSetAsync(fileName, split, labelColumn, ignoredColumns); // Factory..

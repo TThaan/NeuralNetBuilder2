@@ -5,14 +5,12 @@ using MatrixExtensions;
 using NeuralNetBuilder.FactoriesAndParameters;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace NeuralNetBuilder
 {
-    public interface ITrainer : INotificationChanged, IDisposable
+    public interface ITrainer : INotificationChanged, IInit, IDisposable
     {
         INet OriginalNet { get; set; }
         ILearningNet LearningNet { get; set; }
@@ -29,7 +27,6 @@ namespace NeuralNetBuilder
         TrainerStatus Status { get; set; }
         Task TrainAsync(bool shuffleSamplesBeforeTraining, string logName);
         Task TestAsync(Sample[] testingSamples, ILogger logger = default);
-        Task Reset();
 
         CostType CostType { get; set; }
     }
@@ -261,6 +258,8 @@ namespace NeuralNetBuilder
                             await FinalizeEpoch(logger);
                             return;
                         }
+                        // Only in debugging or optional?!
+                        // else await FinalizeEpoch(logger);
                     }
 
                     await FinalizeEpoch(logger);
@@ -273,7 +272,7 @@ namespace NeuralNetBuilder
 
         private async Task FinalizeEpoch(ILogger logger)
         {
-            TrainedNet = LearningNet.GetNet();
+            TrainedNet = (Net)LearningNet;
 
             if (currentSample == SamplesTotal)
             {
@@ -326,23 +325,6 @@ namespace NeuralNetBuilder
             int predictedHotIndex = Array.IndexOf(LearningNet.Output, LearningNet.Output.GetMaximum());
             prediction = SampleSet.Targets.First(x => x.Value[predictedHotIndex] == 1).Key;
             return targetHotIndex == predictedHotIndex;
-        }
-        public async Task Reset()
-        {
-            await Task.Run(() =>
-            {
-                // OriginalNet = null;  // Can be kept?
-                LearningNet = null;
-                TrainedNet = null;
-                // SampleSet = null;    // Can be kept?
-                //Epochs = 0;
-                currentEpoch = 0;
-                lastEpochsAccuracy = 0;
-                currentSample = 0;
-                LearningRate = 0;
-                //LearningRateChange = 0;
-                Status = TrainerStatus.Undefined;
-            });
         }
 
         #region Logging
@@ -421,6 +403,63 @@ namespace NeuralNetBuilder
         }
 
         #endregion
+
+        #endregion
+
+        #region IInit
+
+        /// <summary>
+        /// 1st param: ITrainerParameters, 
+        /// 2nd param: INet
+        /// </summary>
+        public void Initialize(params object[] parameters)
+        {
+            if (parameters.Length != 3)
+                throw new ArgumentException("Two parameters needed in Initialize(..), ITrainerParameters, INet and ISampleSet.");
+
+            var trainerParameters = parameters[0] as ITrainerParameters;
+            var net = parameters[1] as INet;
+            var sampleSet = parameters[2] as ISampleSet;
+
+            if (trainerParameters == null)
+                throw new ArgumentException($"First parameter must be of type {trainerParameters.GetType().Name}");
+            if (net == null)
+                throw new ArgumentException($"Second parameter must be of type {net.GetType().Name}");
+            if (sampleSet == null)
+                throw new ArgumentException($"Third parameter must be of type {sampleSet.GetType().Name}");
+
+            if (!net.IsInitialized)
+                throw new ArgumentException($"Net must be initialized to initialize the trainer.");
+
+            Epochs = trainerParameters.Epochs;
+            LearningRate = trainerParameters.LearningRate;
+            LearningRateChange = trainerParameters.LearningRateChange;
+            CostType = trainerParameters.CostType;
+            OriginalNet = net.GetCopy();
+            SampleSet = sampleSet;
+            // throw new ArgumentException($"{SampleSet == null}");
+
+            SamplesTotal = SampleSet.Samples.Length;
+
+            LearningNet = net.GetLearningNet(CostType);
+
+            IsInitialized = true;    // DIC?
+        }
+        public void Reset()
+        {
+            // OriginalNet = null;  // Can be kept?
+            LearningNet = null;
+            TrainedNet = null;
+            // SampleSet = null;    // Can be kept?
+            //Epochs = 0;
+            currentEpoch = 0;
+            lastEpochsAccuracy = 0;
+            currentSample = 0;
+            LearningRate = 0;
+            //LearningRateChange = 0;
+            Status = TrainerStatus.Undefined;
+        }
+        public bool IsInitialized { get; private set; }
 
         #endregion
 

@@ -1,6 +1,5 @@
 ﻿using MatrixExtensions;
 using NeuralNetBuilder.ActivatorFunctions;
-using System.Linq;
 
 namespace NeuralNetBuilder.FactoriesAndParameters
 {

@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace NeuralNetBuilder.Builders
@@ -207,6 +208,7 @@ namespace NeuralNetBuilder.Builders
 
         public async Task LoadNetParametersAsync(string fileName)
         {
+            // Thread.Sleep(2000);
             Notification = "Loading net parameters from file, please wait...";
             NetParameters = await Import.LoadAsJsonAsync<NetParameters>(fileName);
             Notification = "Successfully loaded net parameters.";
