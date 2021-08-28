@@ -34,8 +34,6 @@ namespace NeuralNetBuilder
         ILayer receptiveField, projectiveField;
         ActivationFunction activationFunction;
 
-        public Layer() { }// internal?
-
         #endregion
 
         #region public

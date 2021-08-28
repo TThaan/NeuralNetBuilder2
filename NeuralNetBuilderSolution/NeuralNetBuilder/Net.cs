@@ -1,5 +1,4 @@
 ﻿using CustomLogger;
-using DeepLearningDataProvider;
 using MatrixExtensions;
 using NeuralNetBuilder.CostFunctions;
 using NeuralNetBuilder.FactoriesAndParameters;
@@ -12,11 +11,15 @@ using System.Threading.Tasks;
 
 namespace NeuralNetBuilder
 {
-    public interface INet : IBaseNet, IInit
+    public interface INet : IBaseNet
     {
         ILayer[] Layers { get; set; }
         ILearningNet GetLearningNet(CostType costType);
         INet GetCopy();
+
+        void Initialize(INetParameters netParameters);
+        void Reset();
+        bool IsInitialized { get; }
     }
 
     [Serializable]
@@ -28,6 +31,20 @@ namespace NeuralNetBuilder
 
         #endregion
 
+        #region IBaseNet
+
+        public async Task FeedForwardAsync(float[] input)
+        {
+            await Task.Run(() =>
+            {
+                Layers[0].ProcessInput(input);
+                Output = Layers.Last().Output;
+            });
+        }
+        public float[] Output { get; internal set; }
+
+        #endregion
+
         #region INet
 
         [JsonProperty(ItemConverterType = typeof(GenericJsonConverter<Layer>))]
@@ -35,7 +52,7 @@ namespace NeuralNetBuilder
         public ILearningNet GetLearningNet(CostType costType)
         {
             ILearningLayer[] layers = new ILearningLayer[Layers.Length];
-            layers = Layers.Select(x => LayerFactory.GetLearningLayer(x))
+            layers = Layers.Select(x => LayerFactory.CreateLearningLayer(x))
                 .ToArray();
 
             for (int i = 0; i < layers.Length - 1; i++)
@@ -82,40 +99,15 @@ namespace NeuralNetBuilder
 
         #endregion
 
-        #region IBaseNet
+        #region Initialization
 
-        public async Task FeedForwardAsync(float[] input)
+        public void Initialize(INetParameters netParameters)
         {
-            await Task.Run(() =>
-            {
-                Layers[0].ProcessInput(input);
-                Output = Layers.Last().Output;
-            });
-        }
-        public float[] Output { get; internal set; }
-
-        #endregion
-
-        #region IInit
-
-        /// <summary>
-        /// 1st param: INetParameters, 
-        /// </summary>
-        public void Initialize(params object[] parameters)
-        {
-            if (parameters.Length != 1)
-                throw new ArgumentException("One parameter needed in Initialize(..), INetParameters.");
-
-            var netParameters = parameters[0] as INetParameters;
-
-            if (netParameters == null)
-                throw new ArgumentException($"First parameter must be of type {netParameters.GetType().Name}");
-
             ILayer[] layers = new ILayer[netParameters.LayerParametersCollection.Count];
 
             for (int i = 0; i < netParameters.LayerParametersCollection.Count; i++)
             {
-                layers[i] = LayerFactory.GetLayer(netParameters.LayerParametersCollection.ElementAt(i));
+                layers[i] = LayerFactory.CreateLayer(netParameters.LayerParametersCollection.ElementAt(i));
 
                 if (i > 0)
                 {
@@ -188,15 +180,21 @@ namespace NeuralNetBuilder
 
         #region Converters
 
-        public static explicit operator Net(LearningNet net)
-        {
-            ILayer[] layers = new ILayer[net.Layers.Length];
-            net.Layers.CopyTo(layers, 0);
-            return new Net()
-            {
-                Layers = layers
-            };
-        }
+        //public static explicit operator LearningNet(Net net)
+        //{
+        //    
+        //    
+        //    
+        //    
+        //    
+        //    
+        //    
+
+        //    
+        //    
+        //    
+        //    
+        //}
 
         #endregion
 

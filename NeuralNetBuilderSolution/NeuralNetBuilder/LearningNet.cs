@@ -1,5 +1,4 @@
 ﻿using CustomLogger;
-using MatrixExtensions;
 using NeuralNetBuilder.CostFunctions;
 using NeuralNetBuilder.FactoriesAndParameters.JsonConverters;
 using Newtonsoft.Json;
@@ -59,6 +58,21 @@ namespace NeuralNetBuilder
             {
                 Layers.ElementAt(1).AdaptWeightsAndBiases(learningRate);
             });
+        }
+
+        #endregion
+
+        #region Converters
+
+        public static explicit operator Net(LearningNet learningNet)
+        {
+            ILayer[] layers = new ILayer[learningNet.Layers.Length];
+            learningNet.Layers.CopyTo(layers, 0);
+
+            return new Net()
+            {
+                Layers = layers
+            };
         }
 
         #endregion

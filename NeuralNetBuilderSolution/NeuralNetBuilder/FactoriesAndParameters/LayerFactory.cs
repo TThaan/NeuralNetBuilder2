@@ -7,11 +7,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
     {
         #region public/internal
 
-        internal static ILayer GetRawLayer()
-        {
-            return new Layer();
-        }
-        internal static ILayer GetLayer(ILayerParameters layerParameters)
+        internal static ILayer CreateLayer(ILayerParameters layerParameters)
         {
             ILayer result = new Layer()
             {
@@ -24,7 +20,7 @@ namespace NeuralNetBuilder.FactoriesAndParameters
 
             return result;
         }
-        internal static ILearningLayer GetLearningLayer(ILayer layer)
+        internal static ILearningLayer CreateLearningLayer(ILayer layer)
         {
             ILearningLayer result = new LearningLayer()//layers.Weights.GetCopy(), layers.Biases.GetCopy()
             {

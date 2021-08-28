@@ -3,7 +3,6 @@ using MatrixExtensions;
 using NeuralNetBuilder.ActivatorFunctions;
 using NeuralNetBuilder.CostFunctions;
 using System;
-using System.Linq;
 
 namespace NeuralNetBuilder
 {
@@ -24,8 +23,6 @@ namespace NeuralNetBuilder
 
         float[] dCDA, dACZ, delta, biasesChange;
         float[,] weightsChange;
-
-        internal LearningLayer() { }
 
         #endregion
 

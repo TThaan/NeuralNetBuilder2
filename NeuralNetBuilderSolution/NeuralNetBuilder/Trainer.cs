@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace NeuralNetBuilder
 {
-    public interface ITrainer : INotificationChanged, IInit, IDisposable
+    public interface ITrainer : INotificationChanged, IDisposable
     {
         INet OriginalNet { get; set; }
         ILearningNet LearningNet { get; set; }
@@ -29,6 +29,10 @@ namespace NeuralNetBuilder
         Task TestAsync(Sample[] testingSamples, ILogger logger = default);
 
         CostType CostType { get; set; }
+
+        void Initialize(ITrainerParameters trainerParameters, INet net, ISampleSet sampleSet);
+        void Reset();
+        bool IsInitialized { get; }
     }
 
     public class Trainer : NotificationChangedBase, ITrainer 
@@ -223,7 +227,7 @@ namespace NeuralNetBuilder
         public async Task TrainAsync(bool shuffleSamplesBeforeTraining, string logName) // Remove logName as parameter and use a field/prop!?
         {
             // Status = TrainerStatus.Running;
-            Notification = "Training";
+            Notification = "\n            Training, please wait...\n";
 
             // LearningNet = NetFactory.GetLearningNet(originalNet, CostType);
 
@@ -237,7 +241,7 @@ namespace NeuralNetBuilder
                 {
                     if (CurrentSample == 0)
                     {
-                        await _sampleSet.ArrangeSamplesAsync(shuffleSamplesBeforeTraining, lastTestResult);
+                        _sampleSet.ArrangeSamplesAsync(shuffleSamplesBeforeTraining, lastTestResult);
                         SamplesTotal = _sampleSet.ArrangedTrainSet.Count;
                     }
 
@@ -267,12 +271,15 @@ namespace NeuralNetBuilder
             }
 
             Status = TrainerStatus.Finished;
-            Notification = "Training Finished";
+            Notification = "\n            Finished training.\n";
         }
 
         private async Task FinalizeEpoch(ILogger logger)
         {
-            TrainedNet = (Net)LearningNet;
+            await Task.Run(() =>
+            {
+                TrainedNet = (Net)(LearningNet as LearningNet);
+            });
 
             if (currentSample == SamplesTotal)
             {
@@ -406,30 +413,14 @@ namespace NeuralNetBuilder
 
         #endregion
 
-        #region IInit
+        #region Initialization
 
-        /// <summary>
-        /// 1st param: ITrainerParameters, 
-        /// 2nd param: INet
-        /// </summary>
-        public void Initialize(params object[] parameters)
+        public void Initialize(ITrainerParameters trainerParameters, INet net, ISampleSet sampleSet)
         {
-            if (parameters.Length != 3)
-                throw new ArgumentException("Two parameters needed in Initialize(..), ITrainerParameters, INet and ISampleSet.");
-
-            var trainerParameters = parameters[0] as ITrainerParameters;
-            var net = parameters[1] as INet;
-            var sampleSet = parameters[2] as ISampleSet;
-
-            if (trainerParameters == null)
-                throw new ArgumentException($"First parameter must be of type {trainerParameters.GetType().Name}");
-            if (net == null)
-                throw new ArgumentException($"Second parameter must be of type {net.GetType().Name}");
-            if (sampleSet == null)
-                throw new ArgumentException($"Third parameter must be of type {sampleSet.GetType().Name}");
-
             if (!net.IsInitialized)
                 throw new ArgumentException($"Net must be initialized to initialize the trainer.");
+            if (!sampleSet.IsInitialized)
+                throw new ArgumentException($"SampleSet must be initialized to initialize the trainer.");
 
             Epochs = trainerParameters.Epochs;
             LearningRate = trainerParameters.LearningRate;
@@ -437,13 +428,10 @@ namespace NeuralNetBuilder
             CostType = trainerParameters.CostType;
             OriginalNet = net.GetCopy();
             SampleSet = sampleSet;
-            // throw new ArgumentException($"{SampleSet == null}");
-
             SamplesTotal = SampleSet.Samples.Length;
-
             LearningNet = net.GetLearningNet(CostType);
 
-            IsInitialized = true;    // DIC?
+            IsInitialized = true;
         }
         public void Reset()
         {
