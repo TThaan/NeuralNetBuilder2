@@ -11,9 +11,6 @@ using System.Threading.Tasks;
 
 namespace NeuralNetBuilder
 {
-    // wa: Just test/run a given net?
-    // wa: global parameters? Or in NetParameters?
-
     // Task: Make redundant!
     public class Initializer : NotificationChangedBase
     {

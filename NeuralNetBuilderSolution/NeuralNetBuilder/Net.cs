@@ -19,7 +19,7 @@ namespace NeuralNetBuilder
 
         void Initialize(INetParameters netParameters);
         void Reset();
-        bool IsInitialized { get; }
+        bool IsInitialized { get; set; }
     }
 
     [Serializable]
@@ -77,6 +77,7 @@ namespace NeuralNetBuilder
             Layers.CopyTo(layers, 0);
             return new Net()
             {
+                IsInitialized = IsInitialized,
                 Layers = layers
             };
         }
@@ -123,14 +124,13 @@ namespace NeuralNetBuilder
             }
 
             Layers = layers;
-            IsInitialized = true;    // DIC?
-
+            IsInitialized = true;
         }
         public void Reset()
         {
             throw new NotImplementedException();
         }
-        public bool IsInitialized { get; private set; }
+        public bool IsInitialized { get; set; }
 
         #region helpers
 

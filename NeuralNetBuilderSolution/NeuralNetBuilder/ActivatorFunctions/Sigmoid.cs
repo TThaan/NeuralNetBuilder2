@@ -2,6 +2,9 @@
 
 namespace NeuralNetBuilder.ActivatorFunctions
 {
+    /// <summary>
+    /// Actually: logarithmic function
+    /// </summary>
     [Serializable]
     public class Sigmoid : ActivationFunction
     {

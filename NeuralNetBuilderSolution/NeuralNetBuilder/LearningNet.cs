@@ -71,7 +71,8 @@ namespace NeuralNetBuilder
 
             return new Net()
             {
-                Layers = layers
+                Layers = layers,
+                IsInitialized = true
             };
         }
 

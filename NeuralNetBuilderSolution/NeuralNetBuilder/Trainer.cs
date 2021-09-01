@@ -14,7 +14,6 @@ namespace NeuralNetBuilder
     {
         INet OriginalNet { get; set; }
         ILearningNet LearningNet { get; set; }
-        INet TrainedNet { get; set; }
         ISampleSet SampleSet { get; set; }
         int SamplesTotal { get; set; }
         int Epochs { get; set; }
@@ -40,7 +39,7 @@ namespace NeuralNetBuilder
         #region fields
 
         ILearningNet learningNet;
-        INet originalNet, trainedNet;
+        INet originalNet;
         ISampleSet _sampleSet;
 
         Dictionary<string, int> lastTestResult = new Dictionary<string, int>();
@@ -48,7 +47,6 @@ namespace NeuralNetBuilder
         float learningRateChange, currentLearningRate, lastEpochsAccuracy, currentTotalCost;
         CostType costType;
         TrainerStatus trainerStatus;
-        // Random rnd;
 
         #endregion
 
@@ -111,18 +109,6 @@ namespace NeuralNetBuilder
                 if (learningNet != value)
                 {
                     learningNet = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-        public INet TrainedNet
-        {
-            get { return trainedNet; }
-            set
-            {
-                if (trainedNet != value)
-                {
-                    trainedNet = value;
                     OnPropertyChanged();
                 }
             }
@@ -224,12 +210,9 @@ namespace NeuralNetBuilder
             }
         }
 
-        public async Task TrainAsync(bool shuffleSamplesBeforeTraining, string logName) // Remove logName as parameter and use a field/prop!?
+        public async Task TrainAsync(bool shuffleSamplesBeforeTraining, string logName)
         {
-            // Status = TrainerStatus.Running;
-            Notification = "\n            Training, please wait...\n";
-
-            // LearningNet = NetFactory.GetLearningNet(originalNet, CostType);
+            Notification = "            Training, please wait...";
 
             using (ILogger logger = string.IsNullOrEmpty(logName)
                 ? null
@@ -237,7 +220,7 @@ namespace NeuralNetBuilder
             {
                 LogNet(logger);
 
-                for (currentEpoch = CurrentEpoch; currentEpoch < Epochs; CurrentEpoch++)
+                for (currentEpoch = CurrentEpoch; currentEpoch < Epochs; ++CurrentEpoch)
                 {
                     if (CurrentSample == 0)
                     {
@@ -270,23 +253,31 @@ namespace NeuralNetBuilder
                 }
             }
 
+            // Undo CurrentEpoch++ & CurrentSample++ in last (undone) loop cycles.
+            CurrentEpoch--;
+            CurrentSample--;
+
             Status = TrainerStatus.Finished;
-            Notification = "\n            Finished training.\n";
+            Notification = "            Finished training.";
         }
 
         private async Task FinalizeEpoch(ILogger logger)
         {
             await Task.Run(() =>
             {
-                TrainedNet = (Net)(LearningNet as LearningNet);
+                OriginalNet = (Net)(LearningNet as LearningNet);
             });
 
             if (currentSample == SamplesTotal)
             {
                 LearningRate *= LearningRateChange;
                 await TestAsync(_sampleSet.TestSet, logger);
-                CurrentSample = 0;
-                await _sampleSet.TrainSet.ShuffleAsync();
+
+                if (!(currentEpoch == Epochs - 1))
+                {
+                    CurrentSample = 0;
+                    await _sampleSet.TrainSet.ShuffleAsync();
+                }
             }
 
             if (Status == TrainerStatus.Paused)
@@ -295,8 +286,8 @@ namespace NeuralNetBuilder
                 CurrentSample++;
                 CurrentEpoch = currentSample == samplesTotal ? currentEpoch + 1 : currentEpoch;
             }
-            else if(Status == TrainerStatus.Running)
-                Notification = $"Epoch {currentEpoch} finished. (Accuracy: {lastEpochsAccuracy})";
+            //else if(Status == TrainerStatus.Running)
+            //    Notification = $"Last epoch's accuracy: {lastEpochsAccuracy}";
         }
         public async Task TestAsync(Sample[] testSet, ILogger logger)
         {
@@ -427,24 +418,25 @@ namespace NeuralNetBuilder
             LearningRateChange = trainerParameters.LearningRateChange;
             CostType = trainerParameters.CostType;
             OriginalNet = net.GetCopy();
+            LearningNet = net.GetLearningNet(CostType);
             SampleSet = sampleSet;
             SamplesTotal = SampleSet.Samples.Length;
-            LearningNet = net.GetLearningNet(CostType);
 
             IsInitialized = true;
         }
         public void Reset()
         {
+            IsInitialized = false;
+
             // OriginalNet = null;  // Can be kept?
             LearningNet = null;
-            TrainedNet = null;
             // SampleSet = null;    // Can be kept?
-            //Epochs = 0;
-            currentEpoch = 0;
-            lastEpochsAccuracy = 0;
-            currentSample = 0;
+            Epochs = 0;
+            CurrentEpoch = 0;
+            LastEpochsAccuracy = 0;
+            CurrentSample = 0;
             LearningRate = 0;
-            //LearningRateChange = 0;
+            LearningRateChange = 0;
             Status = TrainerStatus.Undefined;
         }
         public bool IsInitialized { get; private set; }
