@@ -1,2 +1,2 @@
-# NeuralNetBuilder2
+# NeuralNet_Core
  
